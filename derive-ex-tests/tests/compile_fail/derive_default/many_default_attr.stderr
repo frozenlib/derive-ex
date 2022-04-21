@@ -1,0 +1,5 @@
+error: there are multiple variants with `#[default(...)]` (A, C)
+ --> tests/compile_fail/derive_default/many_default_attr.rs:5:5
+  |
+5 |     #[default]
+  |     ^

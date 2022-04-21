@@ -1,0 +1,5 @@
+error: unsupported trait
+ --> tests/compile_fail/common/invalid_trait.rs:3:13
+  |
+3 | #[derive_ex(Unknown)]
+  |             ^^^^^^^

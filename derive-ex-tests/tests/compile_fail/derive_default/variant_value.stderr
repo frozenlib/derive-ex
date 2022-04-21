@@ -1,0 +1,5 @@
+error: `#[default(...)]` on a variant cannot specify a default value
+ --> tests/compile_fail/derive_default/variant_value.rs:5:15
+  |
+5 |     #[default(10)]
+  |               ^^

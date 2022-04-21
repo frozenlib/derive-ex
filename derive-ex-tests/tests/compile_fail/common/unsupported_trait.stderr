@@ -1,0 +1,5 @@
+error: derive `Add` for enum is not supported
+ --> tests/compile_fail/common/unsupported_trait.rs:3:13
+  |
+3 | #[derive_ex(Add)]
+  |             ^^^

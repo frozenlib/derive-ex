@@ -1,0 +1,2 @@
+[workspace]
+members = ["derive-ex", "derive-ex-tests"]

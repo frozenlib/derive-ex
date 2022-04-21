@@ -1,0 +1,7 @@
+error: variant with `#[default(...)]` does not exist.
+ --> tests/compile_fail/derive_default/no_default_attr.rs:3:1
+  |
+3 | #[derive_ex(Default)]
+  | ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the attribute macro `derive_ex` (in Nightly builds, run with -Z macro-backtrace for more info)
