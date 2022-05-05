@@ -13,9 +13,9 @@
 //!
 //! ## Differences from standard derive macros
 //!
-//! - Trait bound that is automatically generated is smarter.
-//! - Trait bound can be specified manually.
-//! - Default values can be specified for each field.
+//! - A trait bound that is automatically generated is smarter.
+//! - You can specify trait bound manually.
+//! - You can specify default values for each field.
 //! - Support derive `Default` for enum.
 //! - Support derive `Clone::clone_from`.
 //! - Support derive operators. (`Add`, `AddAssign`, `Not`, etc.)
