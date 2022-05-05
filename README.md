@@ -8,7 +8,7 @@ Improved version of the macro to implement the traits defined in the standard li
 
 ## Documentation
 
-See [`#[derive_ex]` documentation](https://docs.rs/derive-ex/latest/derive-ex/attr.derive_ex.html) for details.
+See [`#[derive_ex]` documentation](https://docs.rs/derive-ex/latest/derive_ex/attr.derive_ex.html) for details.
 
 ## Differences from standard derive macros
 
