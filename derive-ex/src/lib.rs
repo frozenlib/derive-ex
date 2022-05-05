@@ -50,7 +50,7 @@ use syn::{parse2, Item, Result};
 /// | `#[derive_ex(Not)]`        |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(bound(...))]` |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(dump))]`      | ✔    | ✔      | ✔    |         |       |
-/// | `#[default]`               |      |        |      | ✔       | ✔     |
+/// | `#[default]`               |      | ✔      | ✔    | ✔       | ✔     |
 ///
 /// # Derive `Clone`
 ///
@@ -72,7 +72,7 @@ use syn::{parse2, Item, Result};
 /// It has the following differences from the standard `#[derive(Clone)]`.
 ///
 /// - Generates [`Clone::clone_from`].
-/// - The standard `#[derive(Clone)]` sets `Clone` constraint on the generic parameters, while `#[derive_ex(Clone)]` sets `Clone` constraint on the tyep of field containing generic parameters.
+/// - The standard `#[derive(Clone)]` sets `Clone` constraint on the generic parameters, while `#[derive_ex(Clone)]` sets `Clone` constraint on the type of field containing generic parameters.
 ///
 /// For example, to derive `Clone` for the following type
 ///
@@ -134,6 +134,9 @@ use syn::{parse2, Item, Result};
 /// }
 /// ```
 ///
+/// If you want to remove `where Rc<T>: Clone` in the above example, you can use `#[derive(Clone(bound()))]`.
+/// See [Specify trait bound](#specify-trait-bound) for details.
+///
 /// # Derive `Default`
 ///
 /// You can use `#[derive_ex(Default)]` to implement [`Default`].
@@ -148,7 +151,25 @@ use syn::{parse2, Item, Result};
 /// assert_eq!(x.a, 0);
 /// ```
 ///
-/// You can use `#[default(...)]` to set the field's default value.
+/// You can use `#[default(...)]` with struct or enum to set the default value.
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+/// #[derive_ex(Default)]
+/// #[default(X::new())]
+/// struct X(u8);
+///
+/// impl X {
+///     fn new() -> Self {
+///         X(5)
+///     }
+/// }
+///
+/// let x = X::default();
+/// assert_eq!(x.0, 5);
+/// ```
+///
+/// You can use `#[default(...)]` with a field to set the field's default value.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
@@ -157,6 +178,7 @@ use syn::{parse2, Item, Result};
 ///     #[default(5)]
 ///     a: u8,
 /// }
+///
 /// let x = X::default();
 /// assert_eq!(x.a, 5);
 /// ```
@@ -175,13 +197,15 @@ use syn::{parse2, Item, Result};
 /// assert_eq!(X::default(), X::B);
 /// ```
 ///
-/// The standard `#[derive(Default)]` sets `Default` constraint on the generic parameters, while `#[derive_ex(Default)]` sets `Default` constraint on the tyep of field containing generic parameters.
+/// The standard `#[derive(Default)]` sets `Default` constraint on the generic parameters, while `#[derive_ex(Default)]` sets `Default` constraint on the type of field containing generic parameters.
 ///
 /// For example, to derive `Default` for the following type
 ///
 /// ```rust
 /// struct X<T>(Option<T>);
 /// ```
+///
+/// The standard `#[derive(Default)]` generates the following code.
 ///
 /// Since `where T: Default` is specified, if `T` does not implement `Default`, then `X<T>` does not implement `Default`.
 ///
@@ -214,6 +238,8 @@ use syn::{parse2, Item, Result};
 /// ```
 ///
 /// Field types with manually set default values are not used as type constraints.
+///
+/// In the following example, `where T : Default` is not generated.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
@@ -384,8 +410,6 @@ use syn::{parse2, Item, Result};
 ///
 /// By applying `#[derive_ex(Add)]` to `impl AddAssign<Rhs> for T`, you can implement `Add<Rhs> for T`.
 ///
-/// `T` must implement `Clone`, when `#[derive_ex(Add)]` is applied to `impl Add<Rhs> for T`.
-///
 /// ```rust
 /// use derive_ex::derive_ex;
 /// use std::ops::AddAssign;
@@ -489,6 +513,10 @@ use syn::{parse2, Item, Result};
 ///
 /// By applying `#[derive_ex(AddAssign)]` to `impl Add<Rhs> for T` or `impl Add<Rhs> for &T`, you can implement `AddAssign<Rhs> for T`.
 ///
+/// When `#[derive_ex(AddAssign)]` is applied to `impl Add<Rhs> for &T`, `T` must implement `Clone`.
+///
+/// When `#[derive_ex(AddAssign)]` is applied to `impl Add<Rhs> for T`, `T` does not have to implement `Clone`.
+///
 /// ```rust
 /// use derive_ex::derive_ex;
 /// use std::ops::Add;
@@ -539,7 +567,7 @@ use syn::{parse2, Item, Result};
 ///
 /// ### Derive both `Add` and `AddAssign` from `impl Add`
 ///
-/// Applying `#[derive_ex(Add, AddAssign)]` to one of the four below will implement the other three, plus generate the same code as when `#[derive_ex(AddAssign)]` is applied to the four below.
+/// Applying `#[derive_ex(Add, AddAssign)]` to one of the four below will implement the other three, plus generate the same code as when `#[derive_ex(AddAssign)]` is applied to `impl Add<T> for &T` and `impl Add<&T> for &T`.
 ///
 /// - `impl Add<T> for T`
 /// - `impl Add<T> for &T`
@@ -553,7 +581,7 @@ use syn::{parse2, Item, Result};
 /// - `Not`
 /// - `Neg`
 ///
-/// You can use #[derive_ex(Not)] to implement Not.
+/// You can use `#[derive_ex(Not)]` to implement `Not`.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
@@ -679,7 +707,7 @@ use syn::{parse2, Item, Result};
 ///
 /// ## `#[bound(T : TraitName)]`
 ///
-/// If a predicate is specified, it is used as is.
+/// If a predicate is specified, it is used as-is.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
@@ -773,10 +801,10 @@ use syn::{parse2, Item, Result};
 ///
 /// # Display generated code
 ///
-/// By using `dump` in `#[derive_ex]`, the generated code is output as an error message.
+/// The generated code is output as an error message by using `#[derive_ex(dump)]`.
 ///
 /// ```compile_error
-/// #[derive_ex(Clone(dump))]
+/// #[derive_ex(Clone, dump)]
 /// struct X<T>(T);
 /// ```
 ///
