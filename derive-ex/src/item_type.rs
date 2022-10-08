@@ -86,8 +86,9 @@ fn build_by_item_struct_core(
             DeriveItemKind::UnaryOp(op) => build_unary_op(item, op, &e, &fields),
             DeriveItemKind::Clone => build_clone_for_struct(item, &e, &fields),
             DeriveItemKind::Default => build_default_for_struct(item, &e, &hattrs, &fields),
-            DeriveItemKind::Deref => build_deref_for_struct(item, &e, &fields),
-            DeriveItemKind::DerefMut => build_deref_mut_for_struct(item, &e, &fields),
+            DeriveItemKind::Deref | DeriveItemKind::DerefMut => {
+                build_deref_for_struct(item, &e, &fields)
+            }
         };
         ts_all.extend(e.apply_dump(result));
     }
@@ -501,7 +502,7 @@ fn build_deref_for_struct(
     e: &DeriveEntry,
     fields: &[FieldEntry],
 ) -> Result<TokenStream> {
-    let kind = DeriveItemKind::Deref;
+    let kind = e.kind;
     let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
@@ -513,51 +514,36 @@ fn build_deref_for_struct(
     if fields.len() != 1 {
         bail!(
             Span::call_site(),
-            "`#[deirve_ex(Deref)]` supports only single field struct."
+            "`#[deirve_ex({})]` supports only single field struct.",
+            kind
         );
     }
     let target_ty = &fields[0].field.ty;
     let member = fields[0].member();
 
-    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
-    Ok(quote! {
-        impl #impl_g #trait_ for #this_ty #wheres {
-            type Target = #target_ty;
-            fn deref(&self) -> & #target_ty {
-                &self.#member
+    let content = match kind {
+        DeriveItemKind::Deref => {
+            quote! {
+                type Target = #target_ty;
+                fn deref(&self) -> & #target_ty {
+                    &self.#member
+                }
             }
         }
-    })
-}
-fn build_deref_mut_for_struct(
-    item: &ItemStruct,
-    e: &DeriveEntry,
-    fields: &[FieldEntry],
-) -> Result<TokenStream> {
-    let kind = DeriveItemKind::DerefMut;
-    let (impl_g, type_g, _) = item.generics.split_for_impl();
-    let this_ty_ident = &item.ident;
-    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let trait_ = kind.to_path();
-
-    let mut wcb = WhereClauseBuilder::new(&item.generics);
-    e.push_bounds_to(&mut wcb);
-
-    if fields.len() != 1 {
-        bail!(
-            Span::call_site(),
-            "`#[deirve_ex(DerefMut)]` supports only single field struct."
-        );
-    }
-    let target_ty = &fields[0].field.ty;
-    let member = fields[0].member();
+        DeriveItemKind::DerefMut => {
+            quote! {
+                fn deref_mut(&mut self) -> &mut #target_ty {
+                    &mut self.#member
+                }
+            }
+        }
+        _ => unreachable!(),
+    };
 
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
         impl #impl_g #trait_ for #this_ty #wheres {
-            fn deref_mut(&mut self) -> &mut #target_ty {
-                &mut self.#member
-            }
+            #content
         }
     })
 }
