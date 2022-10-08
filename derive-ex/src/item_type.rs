@@ -279,14 +279,12 @@ fn build_clone_for_struct(
     fields: &[FieldEntry],
 ) -> Result<TokenStream> {
     let kind = DeriveItemKind::Clone;
-    let (_, type_g, _) = item.generics.split_for_impl();
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let generics = expand_self(&item.generics, &this_ty);
-    let (impl_g, _, _) = generics.split_for_impl();
     let trait_ = kind.to_path();
 
-    let mut wcb = WhereClauseBuilder::new(&generics);
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
     let use_bounds = e.push_bounds_to(&mut wcb);
     let mut ctor_args = Vec::new();
     let mut clone_from_exprs = Vec::new();
@@ -317,14 +315,12 @@ fn build_clone_for_enum(
     variants: &[VariantEntry],
 ) -> Result<TokenStream> {
     let kind = DeriveItemKind::Clone;
-    let (_, type_g, _) = item.generics.split_for_impl();
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let generics = expand_self(&item.generics, &this_ty);
-    let (impl_g, _, _) = generics.split_for_impl();
     let trait_ = kind.to_path();
 
-    let mut wcb = WhereClauseBuilder::new(&generics);
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
     let use_bounds = e.push_bounds_to(&mut wcb);
     let mut arms_clone = Vec::new();
     let mut arms_clone_from = Vec::new();
@@ -382,14 +378,12 @@ fn build_default_for_struct(
     fields: &[FieldEntry],
 ) -> Result<TokenStream> {
     let kind = DeriveItemKind::Default;
-    let (_, type_g, _) = item.generics.split_for_impl();
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let generics = expand_self(&item.generics, &this_ty);
-    let (impl_g, _, _) = generics.split_for_impl();
     let trait_ = kind.to_path();
 
-    let mut wcb = WhereClauseBuilder::new(&generics);
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
     let use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
     let value = if let Some(a) = &hattrs.default {
         a.value.as_ref()
@@ -419,14 +413,12 @@ fn build_default_for_enum(
     variants: &[VariantEntry],
 ) -> Result<TokenStream> {
     let kind = DeriveItemKind::Default;
-    let (_, type_g, _) = item.generics.split_for_impl();
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let generics = expand_self(&item.generics, &this_ty);
-    let (impl_g, _, _) = generics.split_for_impl();
     let trait_ = kind.to_path();
 
-    let mut wcb = WhereClauseBuilder::new(&generics);
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
     let mut use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
     let value = if let Some(value) = hattrs.default_value() {
         quote!(#value)
@@ -510,13 +502,12 @@ fn build_deref_for_struct(
     fields: &[FieldEntry],
 ) -> Result<TokenStream> {
     let kind = DeriveItemKind::Deref;
-    let (_, type_g, _) = item.generics.split_for_impl();
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let generics = expand_self(&item.generics, &this_ty);
-    let (impl_g, _, _) = generics.split_for_impl();
     let trait_ = kind.to_path();
-    let mut wcb = WhereClauseBuilder::new(&generics);
+
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
     e.push_bounds_to(&mut wcb);
 
     if fields.len() != 1 {
@@ -544,13 +535,12 @@ fn build_deref_mut_for_struct(
     fields: &[FieldEntry],
 ) -> Result<TokenStream> {
     let kind = DeriveItemKind::DerefMut;
-    let (_, type_g, _) = item.generics.split_for_impl();
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
     let this_ty_ident = &item.ident;
     let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
-    let generics = expand_self(&item.generics, &this_ty);
-    let (impl_g, _, _) = generics.split_for_impl();
     let trait_ = kind.to_path();
-    let mut wcb = WhereClauseBuilder::new(&generics);
+
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
     e.push_bounds_to(&mut wcb);
 
     if fields.len() != 1 {
