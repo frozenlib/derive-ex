@@ -15,7 +15,6 @@ See [`#[derive_ex]` documentation](https://docs.rs/derive-ex/latest/derive_ex/at
 - A trait bound that is automatically generated is smarter.
 - You can specify trait bound manually.
 - You can specify default values for each field.
-- Support derive `Default` for enum.
 - Support derive `Clone::clone_from`.
 - Support derive operators. (`Add`, `AddAssign`, `Not`, `Deref`, etc.)
 
