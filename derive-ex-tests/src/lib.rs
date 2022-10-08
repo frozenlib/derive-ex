@@ -18,7 +18,7 @@
 //! - You can specify default values for each field.
 //! - Support derive `Default` for enum.
 //! - Support derive `Clone::clone_from`.
-//! - Support derive operators. (`Add`, `AddAssign`, `Not`, etc.)
+//! - Support derive operators. (`Add`, `AddAssign`, `Not`, `Deref`, etc.)
 //!
 //! ## Supported traits
 //!
@@ -28,6 +28,7 @@
 //!   - Add-like (`Add`, `Sub`, `Mul`, `Shl`, etc.)
 //!   - AddAssign-like (`AddAssign`, `SubAssign`, `MulAssign`, `ShlAssign`, etc.)
 //!   - Not-like (`Not`, `Neg`)
+//!   - `Deref`, `DerefMut`
 //!
 //! ## Unsupported traits
 //!
