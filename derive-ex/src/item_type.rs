@@ -86,6 +86,8 @@ fn build_by_item_struct_core(
             DeriveItemKind::UnaryOp(op) => build_unary_op(item, op, &e, &fields),
             DeriveItemKind::Clone => build_clone_for_struct(item, &e, &fields),
             DeriveItemKind::Default => build_default_for_struct(item, &e, &hattrs, &fields),
+            DeriveItemKind::Deref => build_deref_for_struct(item, &e, &fields),
+            DeriveItemKind::DerefMut => build_deref_mut_for_struct(item, &e, &fields),
         };
         ts_all.extend(e.apply_dump(result));
     }
@@ -502,6 +504,74 @@ fn build_default_ctor_args(
     Ok(build_ctor_args(fields_source, &ctor_args))
 }
 
+fn build_deref_for_struct(
+    item: &ItemStruct,
+    e: &DeriveEntry,
+    fields: &[FieldEntry],
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::Deref;
+    let (_, type_g, _) = item.generics.split_for_impl();
+    let this_ty_ident = &item.ident;
+    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
+    let generics = expand_self(&item.generics, &this_ty);
+    let (impl_g, _, _) = generics.split_for_impl();
+    let trait_ = kind.to_path();
+    let mut wcb = WhereClauseBuilder::new(&generics);
+    e.push_bounds_to(&mut wcb);
+
+    if fields.len() != 1 {
+        bail!(
+            Span::call_site(),
+            "`#[deirve_ex(Deref)]` supports only single field struct."
+        );
+    }
+    let target_ty = &fields[0].field.ty;
+    let member = fields[0].member();
+
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {
+            type Target = #target_ty;
+            fn deref(&self) -> & #target_ty {
+                &self.#member
+            }
+        }
+    })
+}
+fn build_deref_mut_for_struct(
+    item: &ItemStruct,
+    e: &DeriveEntry,
+    fields: &[FieldEntry],
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::DerefMut;
+    let (_, type_g, _) = item.generics.split_for_impl();
+    let this_ty_ident = &item.ident;
+    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
+    let generics = expand_self(&item.generics, &this_ty);
+    let (impl_g, _, _) = generics.split_for_impl();
+    let trait_ = kind.to_path();
+    let mut wcb = WhereClauseBuilder::new(&generics);
+    e.push_bounds_to(&mut wcb);
+
+    if fields.len() != 1 {
+        bail!(
+            Span::call_site(),
+            "`#[deirve_ex(DerefMut)]` supports only single field struct."
+        );
+    }
+    let target_ty = &fields[0].field.ty;
+    let member = fields[0].member();
+
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {
+            fn deref_mut(&mut self) -> &mut #target_ty {
+                &mut self.#member
+            }
+        }
+    })
+}
+
 fn with_ref(source: &impl ToTokens, is_ref: bool) -> TokenStream {
     if is_ref {
         quote!(&#source)
@@ -564,8 +634,8 @@ enum DeriveItemKind {
     UnaryOp(UnaryOp),
     Clone,
     Default,
-    // Deref,
-    // DerefMut,
+    Deref,
+    DerefMut,
     // Index,
     // IndexMut,
     // AsRef,
@@ -589,8 +659,8 @@ impl DeriveItemKind {
         Some(match s {
             "Clone" => Self::Clone,
             "Default" => Self::Default,
-            // "Deref" => Self::Deref,
-            // "DerefMut" => Self::DerefMut,
+            "Deref" => Self::Deref,
+            "DerefMut" => Self::DerefMut,
             // "Index" => Self::Index,
             // "IndexMut" => Self::IndexMut,
             // "AsRef" => Self::AsRef,
@@ -626,7 +696,9 @@ impl DeriveItemKind {
                 parse_quote!(::core::ops::#ident)
             }
             DeriveItemKind::Clone => parse_quote!(::core::clone::Clone),
-            DeriveItemKind::Default => parse_quote!(::std::default::Default),
+            DeriveItemKind::Default => parse_quote!(::core::default::Default),
+            DeriveItemKind::Deref => parse_quote!(::core::ops::Deref),
+            DeriveItemKind::DerefMut => parse_quote!(::core::ops::DerefMut),
         }
     }
 }
@@ -638,6 +710,8 @@ impl std::fmt::Display for DeriveItemKind {
             DeriveItemKind::UnaryOp(op) => write!(f, "{}", op),
             DeriveItemKind::Clone => write!(f, "Clone"),
             DeriveItemKind::Default => write!(f, "Default"),
+            DeriveItemKind::Deref => write!(f, "Deref"),
+            DeriveItemKind::DerefMut => write!(f, "DerefMut"),
         }
     }
 }
