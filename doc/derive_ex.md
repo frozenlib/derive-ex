@@ -3,6 +3,8 @@ Improved version of the macro to implement the traits defined in the standard li
 - [Attributes](#attributes)
 - [Derive `Clone`](#derive-clone)
 - [Derive `Default`](#derive-default)
+- [Derive `Deref`](#derive-deref)
+- [Derive `DerefMut`](#derive-derefmut)
 - [Derive operators](#derive-operators)
   - [`Add`-like](#add-like)
     - [Derive `Add` from struct definition](#derive-add-from-struct-definition)
@@ -28,6 +30,8 @@ You can write attributes in the following positions.
 | -------------------------- | ---- | ------ | ---- | ------- | ----- |
 | `#[derive_ex(Clone)]`      |      | ✔      | ✔    | ✔       | ✔     |
 | `#[derive_ex(Default)]`    |      | ✔      | ✔    | ✔       | ✔     |
+| `#[derive_ex(Deref)]`      |      | ✔      |      |         |       |
+| `#[derive_ex(DerefMut)]`   |      | ✔      |      |         |       |
 | `#[derive_ex(Add)]`        | ✔    | ✔      |      |         | ✔     |
 | `#[derive_ex(AddAssign)]`  | ✔    | ✔      |      |         | ✔     |
 | `#[derive_ex(Not)]`        |      | ✔      | ✔    | ✔       | ✔     |
@@ -245,6 +249,32 @@ struct X<T: New> {
     a: T,
 }
 assert_eq!(X::default(), X { a: NoDefault })
+```
+
+# Derive `Deref`
+
+You can use `#[derive(Deref)]` for struct with a single field to implement `Deref`.
+
+```rust
+use derive_ex::derive_ex;
+
+#[derive_ex(Deref)]
+struct X(u8);
+
+let _: &u8 = &X(10u8);
+```
+
+# Derive `DerefMut`
+
+You can use `#[derive(DerefMut)]` for struct with a single field to implement `DerefMut`.
+
+```rust
+use derive_ex::derive_ex;
+
+#[derive_ex(Deref, DerefMut)]
+struct X(u8);
+
+let _: &mut u8 = &mut X(10u8);
 ```
 
 # Derive operators
