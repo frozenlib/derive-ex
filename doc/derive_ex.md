@@ -676,7 +676,7 @@ Trait bound can be specified in the following three ways.
 
 - Type (`T`)
 - Predicate (`T : TraitName`)
-- Default (`...`)
+- Default (`..`)
 
 ## `#[bound(T)]`
 

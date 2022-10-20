@@ -693,7 +693,7 @@ use syn::{parse2, Item, Result};
 ///
 /// - Type (`T`)
 /// - Predicate (`T : TraitName`)
-/// - Default (`...`)
+/// - Default (`..`)
 ///
 /// ## `#[bound(T)]`
 ///
