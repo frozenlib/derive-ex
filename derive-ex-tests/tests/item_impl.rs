@@ -428,3 +428,45 @@ fn add_by_add_assign_rhs_ref() {
 
     assert_eq!((X(10) + &X(2)).0, 12);
 }
+
+#[test]
+fn bitor() {
+    use std::ops::BitOr;
+
+    #[derive(Clone)]
+    struct X(u32);
+
+    #[derive_ex(BitOr, BitOrAssign)]
+    impl BitOr for X {
+        type Output = Self;
+
+        fn bitor(self, rhs: Self) -> Self::Output {
+            X(self.0 | rhs.0)
+        }
+    }
+    assert_eq!((X(0b101) | X(0b011)).0, 0b111);
+    assert_eq!((X(0b101) | &X(0b011)).0, 0b111);
+    assert_eq!((&X(0b101) | X(0b011)).0, 0b111);
+    assert_eq!((&X(0b101) | &X(0b011)).0, 0b111);
+}
+
+#[test]
+fn bitand() {
+    use std::ops::BitAnd;
+
+    #[derive(Clone)]
+    struct X(u32);
+
+    #[derive_ex(BitAnd, BitAndAssign)]
+    impl BitAnd for X {
+        type Output = Self;
+
+        fn bitand(self, rhs: Self) -> Self::Output {
+            X(self.0 & rhs.0)
+        }
+    }
+    assert_eq!((X(0b101) & X(0b011)).0, 0b001);
+    assert_eq!((X(0b101) & &X(0b011)).0, 0b001);
+    assert_eq!((&X(0b101) & X(0b011)).0, 0b001);
+    assert_eq!((&X(0b101) & &X(0b011)).0, 0b001);
+}

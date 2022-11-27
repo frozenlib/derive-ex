@@ -45,9 +45,9 @@ impl BinaryOp {
     pub fn to_func_name(self) -> &'static str {
         match self {
             Self::Add => "add",
-            Self::BitAnd => "bit_and",
-            Self::BitOr => "bit_or",
-            Self::BitXor => "bit_xor",
+            Self::BitAnd => "bitand",
+            Self::BitOr => "bitor",
+            Self::BitXor => "bitxor",
             Self::Div => "div",
             Self::Mul => "mul",
             Self::Rem => "rem",
