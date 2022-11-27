@@ -10,4 +10,4 @@ publish = false
 derive-ex = { path = "../derive-ex" }
 
 [dev-dependencies]
-trybuild = "1.0.61"
+trybuild = "1.0.71"

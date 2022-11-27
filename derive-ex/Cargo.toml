@@ -17,12 +17,12 @@ description = "Improved version of the macro to implement the traits defined in 
 proc-macro = true
 
 [dependencies]
-syn = { version = "1.0.92", features = [
+syn = { version = "1.0.103", features = [
     "full",
     "extra-traits",
     "visit",
     "visit-mut",
 ] }
-quote = "1.0.18"
-proc-macro2 = "1.0.37"
+quote = "1.0.21"
+proc-macro2 = "1.0.47"
 structmeta = "0.1.5"
