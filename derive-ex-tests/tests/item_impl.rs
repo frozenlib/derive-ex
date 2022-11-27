@@ -470,3 +470,24 @@ fn bitand() {
     assert_eq!((&X(0b101) & X(0b011)).0, 0b001);
     assert_eq!((&X(0b101) & &X(0b011)).0, 0b001);
 }
+
+#[test]
+fn bitxor() {
+    use std::ops::BitXor;
+
+    #[derive(Clone)]
+    struct X(u32);
+
+    #[derive_ex(BitXor, BitXorAssign)]
+    impl BitXor for X {
+        type Output = Self;
+
+        fn bitxor(self, rhs: Self) -> Self::Output {
+            X(self.0 ^ rhs.0)
+        }
+    }
+    assert_eq!((X(0b101) ^ X(0b011)).0, 0b110);
+    assert_eq!((X(0b101) ^ &X(0b011)).0, 0b110);
+    assert_eq!((&X(0b101) ^ X(0b011)).0, 0b110);
+    assert_eq!((&X(0b101) ^ &X(0b011)).0, 0b110);
+}
