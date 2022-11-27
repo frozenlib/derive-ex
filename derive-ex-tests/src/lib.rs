@@ -44,7 +44,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! derive-ex = "0.1.2"
+//! derive-ex = "0.1.3"
 //! ```
 //!
 //! ## Example
