@@ -1,4 +1,7 @@
 use derive_ex::derive_ex;
+use test_utils_debug::assert_debug_eq;
+
+mod test_utils_debug;
 
 #[test]
 fn unit() {
@@ -124,9 +127,4 @@ fn transparent_field_struct() {
     #[derive_ex(Debug)]
     struct X(#[debug(transparent)] A);
     assert_debug_eq(X(a), a);
-}
-
-fn assert_debug_eq(a: impl std::fmt::Debug, e: impl std::fmt::Debug) {
-    assert_eq!(format!("{:?}", a), format!("{:?}", e));
-    assert_eq!(format!("{:#?}", a), format!("{:#?}", e));
 }

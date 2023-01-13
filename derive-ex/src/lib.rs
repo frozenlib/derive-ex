@@ -19,6 +19,10 @@ use syn::{parse2, Item, Result};
 ///
 /// - [Attributes](#attributes)
 /// - [Derive `Clone`](#derive-clone)
+/// - [Derive `Debug`](#derive-debug)
+///   - [`#[debug(ignore)]`](#debugignore)
+///   - [`#[debug(transparent)]`](#debugtransparent)
+///   - [`#[debug(bounds)]`](#debugbounds)
 /// - [Derive `Default`](#derive-default)
 /// - [Derive `Deref`](#derive-deref)
 /// - [Derive `DerefMut`](#derive-derefmut)
@@ -46,6 +50,7 @@ use syn::{parse2, Item, Result};
 /// | attribute                  | impl | struct | enum | variant | field |
 /// | -------------------------- | ---- | ------ | ---- | ------- | ----- |
 /// | `#[derive_ex(Clone)]`      |      | ✔      | ✔    | ✔       | ✔     |
+/// | `#[derive_ex(Debug)]`      |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(Default)]`    |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(Deref)]`      |      | ✔      |      |         |       |
 /// | `#[derive_ex(DerefMut)]`   |      | ✔      |      |         |       |
@@ -140,6 +145,50 @@ use syn::{parse2, Item, Result};
 ///
 /// If you want to remove `where Rc<T>: Clone` in the above example, you can use `#[derive(Clone(bound()))]`.
 /// See [Specify trait bound](#specify-trait-bound) for details.
+///
+/// # Derive `Debug`
+///
+/// You can use `#[derive_ex(Debug)]` to implement [`Debug`].
+///
+/// The following helper attribute arguments allow you to customize your `Debug` implementation.
+///
+/// | attribute                          | struct | enum | variant | field |
+/// | ---------------------------------- | ------ | ---- | ------- | ----- |
+/// | [`ignore`](#debugignore)           |        |      |         | ✔     |
+/// | [`transparent`](#debugtransparent) |        |      |         | ✔     |
+/// | [`bounds(...)`](#debugbounds)      | ✔      | ✔    | ✔       | ✔     |
+///
+/// ## `#[debug(ignore)]`
+///
+/// By setting `#[debug(ignore)]` to a field, you can exclude that field from debug output.
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+/// #[derive_ex(Debug)]
+/// struct X {
+///     a: u32,
+///     #[debug(ignore)]
+///     b: u32,
+/// }
+/// assert_eq!(format!("{:?}", X { a: 1, b: 2 }), "X { a: 1 }");
+/// ```
+///
+/// ## `#[debug(transparent)]`
+///
+/// You can transfer processing to a field by setting `#[debug(transparent)]` to that field.
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+/// #[derive_ex(Debug)]
+/// struct X {
+///     a: u32,
+///     #[debug(transparent)]
+///     b: u32,
+/// }
+/// assert_eq!(format!("{:?}", X { a: 1, b: 2 }), "2");
+/// ```
+///
+/// ## `#[debug(bounds)]`
 ///
 /// # Derive `Default`
 ///
