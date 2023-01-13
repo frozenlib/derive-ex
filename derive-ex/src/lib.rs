@@ -22,7 +22,7 @@ use syn::{parse2, Item, Result};
 /// - [Derive `Debug`](#derive-debug)
 ///   - [`#[debug(ignore)]`](#debugignore)
 ///   - [`#[debug(transparent)]`](#debugtransparent)
-///   - [`#[debug(bounds)]`](#debugbounds)
+///   - [`#[debug(bounds(...))]`](#debugbounds)
 /// - [Derive `Default`](#derive-default)
 /// - [Derive `Deref`](#derive-deref)
 /// - [Derive `DerefMut`](#derive-derefmut)
@@ -188,7 +188,54 @@ use syn::{parse2, Item, Result};
 /// assert_eq!(format!("{:?}", X { a: 1, b: 2 }), "2");
 /// ```
 ///
-/// ## `#[debug(bounds)]`
+/// ## `#[debug(bounds(...))]`
+///
+/// The standard `#[derive(Debug)]` sets `Debug` constraint on the generic parameters, while `#[derive_ex(Debug)]` sets `Debug` constraint on the type of field containing generic parameters.
+///
+/// For example, to derive `Debug` for the following type
+///
+/// ```rust
+/// use std::marker::PhantomData;
+/// struct X<T>(PhantomData<T>);
+/// ```
+///
+/// The standard `#[derive(Debug)]` generates the following code.
+///
+/// Since `where T: Debug` is specified, if `T` does not implement `Debug`, then `X<T>` does not implement `Debug`.
+///
+/// ```rust
+/// # use std::marker::PhantomData;
+/// # struct X<T>(PhantomData<T>);
+/// use std::fmt::Debug;
+/// impl<T> Debug for X<T>
+/// where
+///     T: Debug,
+/// {
+///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+///         f.debug_struct("X").finish()
+///     }
+/// }
+/// ```
+///
+/// On the other hand, `#[derive_ex(Debug)]` generates the following code.
+///
+/// Unlike the standard `#[derive(Debug)]`, `X<T>` always implements `Debug`.
+///
+/// ```rust
+/// # use std::marker::PhantomData;
+/// # struct X<T>(PhantomData<T>);
+/// use std::fmt::Debug;
+/// impl<T> Debug for X<T>
+/// where
+///     PhantomData<T>: Debug,
+/// {
+///     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+///         f.debug_struct("X").finish()
+///     }
+/// }
+/// ```
+///
+/// You can also manually specify a trait bound. See [Specify trait bound](#specify-trait-bound) for details.
 ///
 /// # Derive `Default`
 ///
