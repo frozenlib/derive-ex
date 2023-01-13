@@ -1,6 +1,8 @@
 use derive_ex::derive_ex;
 use test_utils_debug::assert_debug_eq;
 
+#[macro_use]
+mod test_utils;
 mod test_utils_debug;
 
 #[test]
@@ -127,4 +129,57 @@ fn transparent_field_struct() {
     #[derive_ex(Debug)]
     struct X(#[debug(transparent)] A);
     assert_debug_eq(X(a), a);
+}
+
+#[test]
+fn generics() {
+    use std::fmt::Debug;
+
+    #[derive_ex(Debug)]
+    struct X<T>(T, T);
+
+    struct NoDebug;
+
+    assert_impl!(Debug, X<u32>);
+    assert_impl!(!Debug, X<NoDebug>);
+}
+
+#[test]
+fn generics_ignore() {
+    use std::fmt::Debug;
+
+    #[derive_ex(Debug)]
+    struct X<T>(#[debug(ignore)] T);
+
+    struct NoDebug;
+
+    assert_impl!(Debug, X<u32>);
+    assert_impl!(Debug, X<NoDebug>);
+}
+
+#[test]
+fn generics_transparent() {
+    use std::fmt::Debug;
+
+    #[derive_ex(Debug)]
+    struct X<T> {
+        #[debug(transparent)]
+        a: T,
+    }
+
+    #[allow(unused)]
+    #[derive_ex(Debug)]
+    struct Y<T> {
+        a: T,
+        #[debug(transparent)]
+        b: usize,
+    }
+
+    struct NoDebug;
+
+    assert_impl!(Debug, X<u32>);
+    assert_impl!(!Debug, X<NoDebug>);
+
+    assert_impl!(Debug, Y<u32>);
+    assert_impl!(Debug, Y<NoDebug>);
 }
