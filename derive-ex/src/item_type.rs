@@ -6,7 +6,7 @@ use crate::{
 use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use std::collections::HashMap;
-use structmeta::{NameArgs, Parse, StructMeta};
+use structmeta::{Flag, NameArgs, Parse, StructMeta};
 use syn::{
     parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, Field,
     Fields, Ident, Index, ItemEnum, ItemStruct, Path, Result, Type, Variant,
@@ -45,21 +45,6 @@ enum DeriveItemArgsOption {
     None,
 }
 
-#[derive(StructMeta, Debug)]
-struct ArgsForDefault {
-    #[struct_meta(unnamed)]
-    value: Expr,
-    bound: Option<NameArgs<Vec<Bound>>>,
-}
-impl Default for ArgsForDefault {
-    fn default() -> Self {
-        Self {
-            value: parse_quote!(_),
-            bound: None,
-        }
-    }
-}
-
 pub fn build_by_item_struct(attr: TokenStream, item: &mut ItemStruct) -> Result<TokenStream> {
     let mut kinds = HelperAttributeKinds::new(true);
     let result = build_by_item_struct_core(attr, item, &mut kinds);
@@ -85,6 +70,7 @@ fn build_by_item_struct_core(
             DeriveItemKind::AssignOp(op) => build_assign_op(item, op, &e, &fields),
             DeriveItemKind::UnaryOp(op) => build_unary_op(item, op, &e, &fields),
             DeriveItemKind::Clone => build_clone_for_struct(item, &e, &fields),
+            DeriveItemKind::Debug => build_debug_for_struct(item, &e, &hattrs, &fields),
             DeriveItemKind::Default => build_default_for_struct(item, &e, &hattrs, &fields),
             DeriveItemKind::Deref | DeriveItemKind::DerefMut => {
                 build_deref_for_struct(item, &e, &fields)
@@ -372,6 +358,71 @@ fn build_clone_for_enum(
     })
 }
 
+fn build_debug_for_struct(
+    item: &ItemStruct,
+    e: &DeriveEntry,
+    hattrs: &HelperAttributes,
+    fields: &[FieldEntry],
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::Debug;
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
+    let this_ty_ident = &item.ident;
+    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
+    let trait_ = kind.to_path();
+
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
+    let use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
+    let mut transparent_field = None;
+    for field in fields {
+        if let Some(a) = &field.hattrs.debug {
+            if let Some(span) = a.transparent.span {
+                if transparent_field.is_some() {
+                    bail!(span, "only one field can be set `#[debug(transparent)]`");
+                }
+                transparent_field = Some(field);
+            }
+        }
+    }
+    let expr = if let Some(field) = transparent_field {
+        field.push_bounds_to(use_bounds, kind, &mut wcb);
+        let member = field.member();
+        quote! {
+            ::core::fmt::Debug::fmt(&self.#member, f)
+        }
+    } else {
+        let is_named = match &item.fields {
+            Fields::Named(_) => true,
+            Fields::Unnamed(_) | Fields::Unit => false,
+        };
+        let mut expr = TokenStream::new();
+        let debug_x = match is_named {
+            true => quote!(debug_struct),
+            false => quote!(debug_tuple),
+        };
+        expr.extend(quote!(f.#debug_x(::core::stringify!(#this_ty_ident))));
+        for field in fields {
+            if !field.hattrs.is_debug_ignore() {
+                let member = field.member();
+                expr.extend(match is_named {
+                    true => quote! (.field(::core::stringify!(#member), &self.#member)),
+                    false => quote! (.field(&self.#member)),
+                });
+                field.push_bounds_to(use_bounds, kind, &mut wcb);
+            }
+        }
+        expr.extend(quote!(.finish()));
+        expr
+    };
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                #expr
+            }
+        }
+    })
+}
+
 fn build_default_for_struct(
     item: &ItemStruct,
     e: &DeriveEntry,
@@ -609,6 +660,7 @@ enum DeriveItemKind {
     AssignOp(BinaryOp),
     UnaryOp(UnaryOp),
     Clone,
+    Debug,
     Default,
     Deref,
     DerefMut,
@@ -634,6 +686,7 @@ impl DeriveItemKind {
         }
         Some(match s {
             "Clone" => Self::Clone,
+            "Debug" => Self::Debug,
             "Default" => Self::Default,
             "Deref" => Self::Deref,
             "DerefMut" => Self::DerefMut,
@@ -672,6 +725,7 @@ impl DeriveItemKind {
                 parse_quote!(::core::ops::#ident)
             }
             DeriveItemKind::Clone => parse_quote!(::core::clone::Clone),
+            DeriveItemKind::Debug => parse_quote!(::core::fmt::Debug),
             DeriveItemKind::Default => parse_quote!(::core::default::Default),
             DeriveItemKind::Deref => parse_quote!(::core::ops::Deref),
             DeriveItemKind::DerefMut => parse_quote!(::core::ops::DerefMut),
@@ -685,6 +739,7 @@ impl std::fmt::Display for DeriveItemKind {
             DeriveItemKind::AssignOp(op) => write!(f, "{}Assign", op),
             DeriveItemKind::UnaryOp(op) => write!(f, "{}", op),
             DeriveItemKind::Clone => write!(f, "Clone"),
+            DeriveItemKind::Debug => write!(f, "Debug"),
             DeriveItemKind::Default => write!(f, "Default"),
             DeriveItemKind::Deref => write!(f, "Deref"),
             DeriveItemKind::DerefMut => write!(f, "DerefMut"),
@@ -832,6 +887,7 @@ impl<'a> FieldEntry<'a> {
 struct HelperAttributeKinds {
     derive_ex: bool,
     default: bool,
+    debug: bool,
 }
 
 impl HelperAttributeKinds {
@@ -839,19 +895,24 @@ impl HelperAttributeKinds {
         Self {
             derive_ex,
             default: false,
+            debug: false,
         }
     }
     fn extend(&mut self, es: &[DeriveEntry]) {
         for e in es {
-            if e.kind == DeriveItemKind::Default {
-                self.default = true
+            match e.kind {
+                DeriveItemKind::Default => self.default = true,
+                DeriveItemKind::Debug => self.debug = true,
+                _ => {}
             }
         }
     }
 
     fn is_match(&self, attr: &Attribute) -> bool {
         let p = &attr.path;
-        (self.derive_ex && p.is_ident("derive_ex")) || (self.default && p.is_ident("default"))
+        (self.derive_ex && p.is_ident("derive_ex"))
+            || (self.default && p.is_ident("default"))
+            || (self.debug && p.is_ident("debug"))
     }
 
     fn without_derive_ex(&self) -> HelperAttributeKinds {
@@ -865,6 +926,7 @@ impl HelperAttributeKinds {
 struct HelperAttributes {
     items: HashMap<DeriveItemKind, DeriveEntry>,
     default: Option<HelperAttributeForDefault>,
+    debug: Option<HelperAttributeForDebug>,
 }
 
 impl HelperAttributes {
@@ -882,7 +944,16 @@ impl HelperAttributes {
         } else {
             None
         };
-        Ok(Self { items, default })
+        let debug = if kinds.debug {
+            HelperAttributeForDebug::from_attrs(attrs)?
+        } else {
+            None
+        };
+        Ok(Self {
+            items,
+            default,
+            debug,
+        })
     }
 
     #[must_use]
@@ -894,6 +965,11 @@ impl HelperAttributes {
     ) -> bool {
         if use_bounds && kind == DeriveItemKind::Default {
             if let Some(a) = &self.default {
+                use_bounds = wcb.push_bounds(&a.bounds)
+            }
+        }
+        if use_bounds && kind == DeriveItemKind::Debug {
+            if let Some(a) = &self.debug {
                 use_bounds = wcb.push_bounds(&a.bounds)
             }
         }
@@ -909,6 +985,55 @@ impl HelperAttributes {
             a.value.as_ref()
         } else {
             None
+        }
+    }
+    fn is_debug_ignore(&self) -> bool {
+        if let Some(a) = &self.debug {
+            a.ignore.value()
+        } else {
+            false
+        }
+    }
+}
+
+#[derive(StructMeta, Debug, Default)]
+struct ArgsForDebug {
+    transparent: Flag,
+    ignore: Flag,
+    bound: Option<NameArgs<Vec<Bound>>>,
+}
+
+#[derive(Default)]
+struct HelperAttributeForDebug {
+    transparent: Flag,
+    ignore: Flag,
+    bounds: Bounds,
+}
+impl HelperAttributeForDebug {
+    fn from_attrs(attrs: &[Attribute]) -> Result<Option<Self>> {
+        if let Some(args) = parse_single::<ArgsForDebug>(attrs, "debug")? {
+            Ok(Some(Self {
+                transparent: args.transparent,
+                ignore: args.ignore,
+                bounds: Bounds::from(&args.bound),
+            }))
+        } else {
+            Ok(None)
+        }
+    }
+}
+
+#[derive(StructMeta, Debug)]
+struct ArgsForDefault {
+    #[struct_meta(unnamed)]
+    value: Expr,
+    bound: Option<NameArgs<Vec<Bound>>>,
+}
+impl Default for ArgsForDefault {
+    fn default() -> Self {
+        Self {
+            value: parse_quote!(_),
+            bound: None,
         }
     }
 }
