@@ -105,6 +105,7 @@ fn build_by_item_enum_core(
     for e in es {
         let result = match e.kind {
             DeriveItemKind::Clone => build_clone_for_enum(item, &e, &variants),
+            DeriveItemKind::Debug => build_debug_for_enum(item, &e, &hattrs, &variants),
             DeriveItemKind::Default => build_default_for_enum(item, &e, &hattrs, &variants),
             _ => bail!(e.span, "derive `{}` for enum is not supported", e.kind),
         };
@@ -372,6 +373,85 @@ fn build_debug_for_struct(
 
     let mut wcb = WhereClauseBuilder::new(&item.generics);
     let use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
+    let to_expr = |field: &FieldEntry| {
+        let member = field.member();
+        quote!(&self.#member)
+    };
+    let expr = build_debug_expr(
+        this_ty_ident,
+        &item.fields,
+        fields,
+        use_bounds,
+        to_expr,
+        &mut wcb,
+    )?;
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                #expr
+            }
+        }
+    })
+}
+fn build_debug_for_enum(
+    item: &ItemEnum,
+    e: &DeriveEntry,
+    hattrs: &HelperAttributes,
+    variants: &[VariantEntry],
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::Debug;
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
+    let this_ty_ident = &item.ident;
+    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
+    let trait_ = kind.to_path();
+
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
+    let use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
+    let mut arms = Vec::new();
+    for variant in variants {
+        let variant_ident = &variant.variant.ident;
+        let use_bounds = variant.hattrs.push_bounds_to(use_bounds, kind, &mut wcb);
+        let to_expr = |field: &FieldEntry| {
+            let var = field.make_ident("");
+            quote!(#var)
+        };
+        let mut pat_args = Vec::new();
+        for field in &variant.fields {
+            let var = field.make_ident("");
+            pat_args.push(quote!(#var));
+        }
+        let expr = build_debug_expr(
+            variant_ident,
+            &variant.variant.fields,
+            &variant.fields,
+            use_bounds,
+            to_expr,
+            &mut wcb,
+        )?;
+        let pat = build_ctor_args(&variant.variant.fields, &pat_args);
+        arms.push(quote!(Self::#variant_ident #pat => #expr));
+    }
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                match self {
+                    #(#arms,)*
+                }
+            }
+        }
+    })
+}
+fn build_debug_expr(
+    ident: &Ident,
+    fields_source: &Fields,
+    fields: &[FieldEntry],
+    use_bounds: bool,
+    to_expr: impl Fn(&FieldEntry) -> TokenStream,
+    wcb: &mut WhereClauseBuilder,
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::Debug;
     let mut transparent_field = None;
     for field in fields {
         if let Some(a) = &field.hattrs.debug {
@@ -384,13 +464,11 @@ fn build_debug_for_struct(
         }
     }
     let expr = if let Some(field) = transparent_field {
-        field.push_bounds_to(use_bounds, kind, &mut wcb);
-        let member = field.member();
-        quote! {
-            ::core::fmt::Debug::fmt(&self.#member, f)
-        }
+        field.push_bounds_to(use_bounds, kind, wcb);
+        let e = to_expr(field);
+        quote!(::core::fmt::Debug::fmt(#e, f))
     } else {
-        let is_named = match &item.fields {
+        let is_named = match fields_source {
             Fields::Named(_) => true,
             Fields::Unnamed(_) | Fields::Unit => false,
         };
@@ -399,28 +477,22 @@ fn build_debug_for_struct(
             true => quote!(debug_struct),
             false => quote!(debug_tuple),
         };
-        expr.extend(quote!(f.#debug_x(::core::stringify!(#this_ty_ident))));
+        expr.extend(quote!(f.#debug_x(::core::stringify!(#ident))));
         for field in fields {
             if !field.hattrs.is_debug_ignore() {
+                let e = to_expr(field);
                 let member = field.member();
                 expr.extend(match is_named {
-                    true => quote! (.field(::core::stringify!(#member), &self.#member)),
-                    false => quote! (.field(&self.#member)),
+                    true => quote! (.field(::core::stringify!(#member), #e)),
+                    false => quote! (.field(#e)),
                 });
-                field.push_bounds_to(use_bounds, kind, &mut wcb);
+                field.push_bounds_to(use_bounds, kind, wcb);
             }
         }
         expr.extend(quote!(.finish()));
         expr
     };
-    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
-    Ok(quote! {
-        impl #impl_g #trait_ for #this_ty #wheres {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                #expr
-            }
-        }
-    })
+    Ok(expr)
 }
 
 fn build_default_for_struct(
