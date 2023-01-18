@@ -69,6 +69,7 @@ fn build_by_item_struct_core(
             DeriveItemKind::BinaryOp(op) => build_binary_op(item, op, &e, &fields),
             DeriveItemKind::AssignOp(op) => build_assign_op(item, op, &e, &fields),
             DeriveItemKind::UnaryOp(op) => build_unary_op(item, op, &e, &fields),
+            DeriveItemKind::Copy => build_copy_for_struct(item, &e, &fields),
             DeriveItemKind::Clone => build_clone_for_struct(item, &e, &fields),
             DeriveItemKind::Debug => build_debug_for_struct(item, &e, &hattrs, &fields),
             DeriveItemKind::Default => build_default_for_struct(item, &e, &hattrs, &fields),
@@ -104,6 +105,7 @@ fn build_by_item_enum_core(
     let mut ts_all = TokenStream::new();
     for e in es {
         let result = match e.kind {
+            DeriveItemKind::Copy => build_copy_for_enum(item, &e, &variants),
             DeriveItemKind::Clone => build_clone_for_enum(item, &e, &variants),
             DeriveItemKind::Debug => build_debug_for_enum(item, &e, &hattrs, &variants),
             DeriveItemKind::Default => build_default_for_enum(item, &e, &hattrs, &variants),
@@ -356,6 +358,50 @@ fn build_clone_for_enum(
                 }
             }
         }
+    })
+}
+fn build_copy_for_struct(
+    item: &ItemStruct,
+    e: &DeriveEntry,
+    fields: &[FieldEntry],
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::Copy;
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
+    let this_ty_ident = &item.ident;
+    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
+    let trait_ = kind.to_path();
+
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
+    let use_bounds = e.push_bounds_to(&mut wcb);
+    for field in fields {
+        field.push_bounds_to(use_bounds, kind, &mut wcb);
+    }
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {}
+    })
+}
+fn build_copy_for_enum(
+    item: &ItemEnum,
+    e: &DeriveEntry,
+    variants: &[VariantEntry],
+) -> Result<TokenStream> {
+    let kind = DeriveItemKind::Copy;
+    let (impl_g, type_g, _) = item.generics.split_for_impl();
+    let this_ty_ident = &item.ident;
+    let this_ty: Type = parse_quote!(#this_ty_ident #type_g);
+    let trait_ = kind.to_path();
+
+    let mut wcb = WhereClauseBuilder::new(&item.generics);
+    let use_bounds = e.push_bounds_to(&mut wcb);
+    for variant in variants {
+        for field in &variant.fields {
+            field.push_bounds_to(use_bounds, kind, &mut wcb);
+        }
+    }
+    let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    Ok(quote! {
+        impl #impl_g #trait_ for #this_ty #wheres {}
     })
 }
 
@@ -731,6 +777,7 @@ enum DeriveItemKind {
     BinaryOp(BinaryOp),
     AssignOp(BinaryOp),
     UnaryOp(UnaryOp),
+    Copy,
     Clone,
     Debug,
     Default,
@@ -757,6 +804,7 @@ impl DeriveItemKind {
             return Some(Self::UnaryOp(value));
         }
         Some(match s {
+            "Copy" => Self::Copy,
             "Clone" => Self::Clone,
             "Debug" => Self::Debug,
             "Default" => Self::Default,
@@ -796,6 +844,7 @@ impl DeriveItemKind {
                 let ident = format_ident!("{}", op.to_str());
                 parse_quote!(::core::ops::#ident)
             }
+            DeriveItemKind::Copy => parse_quote!(::core::marker::Copy),
             DeriveItemKind::Clone => parse_quote!(::core::clone::Clone),
             DeriveItemKind::Debug => parse_quote!(::core::fmt::Debug),
             DeriveItemKind::Default => parse_quote!(::core::default::Default),
@@ -810,6 +859,7 @@ impl std::fmt::Display for DeriveItemKind {
             DeriveItemKind::BinaryOp(op) => write!(f, "{}", op),
             DeriveItemKind::AssignOp(op) => write!(f, "{}Assign", op),
             DeriveItemKind::UnaryOp(op) => write!(f, "{}", op),
+            DeriveItemKind::Copy => write!(f, "Copy"),
             DeriveItemKind::Clone => write!(f, "Clone"),
             DeriveItemKind::Debug => write!(f, "Debug"),
             DeriveItemKind::Default => write!(f, "Default"),
