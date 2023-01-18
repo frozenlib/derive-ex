@@ -22,6 +22,7 @@
 //!
 //! ## Supported traits
 //!
+//! - `Copy`
 //! - `Clone`
 //! - `Debug`
 //! - `Default`

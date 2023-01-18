@@ -21,6 +21,7 @@ See [`#[derive_ex]` documentation](https://docs.rs/derive-ex/latest/derive_ex/at
 
 ## Supported traits
 
+- `Copy`
 - `Clone`
 - `Debug`
 - `Default`

@@ -1,6 +1,7 @@
 Improved version of the macro to implement the traits defined in the standard library.
 
 - [Attributes](#attributes)
+- [Derive `Copy`](#derive-copy)
 - [Derive `Clone`](#derive-clone)
 - [Derive `Debug`](#derive-debug)
   - [`#[debug(ignore)]`](#debugignore)
@@ -32,6 +33,7 @@ You can write attributes in the following positions.
 
 | attribute                  | impl | struct | enum | variant | field |
 | -------------------------- | ---- | ------ | ---- | ------- | ----- |
+| `#[derive_ex(Copy)]`       |      | ✔      | ✔    | ✔       | ✔     |
 | `#[derive_ex(Clone)]`      |      | ✔      | ✔    | ✔       | ✔     |
 | `#[derive_ex(Debug)]`      |      | ✔      | ✔    | ✔       | ✔     |
 | `#[derive_ex(Default)]`    |      | ✔      | ✔    | ✔       | ✔     |
@@ -43,6 +45,53 @@ You can write attributes in the following positions.
 | `#[derive_ex(bound(...))]` |      | ✔      | ✔    | ✔       | ✔     |
 | `#[derive_ex(dump))]`      | ✔    | ✔      | ✔    |         |       |
 | `#[default]`               |      | ✔      | ✔    | ✔       | ✔     |
+
+# Derive `Copy`
+
+You can use `#[derive_ex(Copy)]` to implement [`Copy`].
+
+```rust
+use derive_ex::derive_ex;
+use std::marker::PhantomData;
+
+#[derive_ex(Copy, Clone)]
+struct X<T>(PhantomData<T>);
+```
+
+The standard `#[derive(Copy)]` sets `Copy` constraint on the generic parameters, while `#[derive_ex(Copy)]` sets `Copy` constraint on the type of field containing generic parameters.
+
+For example, adding `#[derive(Copy)]` to the previous structure `X<T>` generates the following code.
+
+Since `where T: Copy` is specified, if `T` does not implement `DebugCopy`, then `X<T>` does not implement `Copy`.
+
+```rust
+# use std::marker::PhantomData;
+# #[derive(Clone)]
+# struct X<T>(PhantomData<T>);
+use core::marker::Copy;
+impl<T: Copy> Copy for X<T>
+where
+    T : Copy
+{
+}
+```
+
+On the other hand, `#[derive_ex(Copy)]` generates the following code.
+
+Unlike the standard `#[derive(Copy)]`, `X<T>` always implements `Copy`.
+
+```rust
+# use derive_ex::derive_ex;
+# use std::marker::PhantomData;
+# #[derive_ex(Clone)]
+# struct X<T>(PhantomData<T>);
+use core::marker::Copy;
+impl<T: Copy> Copy for X<T>
+where
+    PhantomData<T>: Copy,
+{
+}
+```
 
 # Derive `Clone`
 
