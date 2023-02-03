@@ -221,7 +221,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
     }
 
     if args.dump {
-        bail!(_, "{}", format!("dump:\n{}", ts));
+        bail!(_, "{}", format!("dump:\n{ts}"));
     }
     Ok(ts)
 }

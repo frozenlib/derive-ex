@@ -856,9 +856,9 @@ impl DeriveItemKind {
 impl std::fmt::Display for DeriveItemKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            DeriveItemKind::BinaryOp(op) => write!(f, "{}", op),
-            DeriveItemKind::AssignOp(op) => write!(f, "{}Assign", op),
-            DeriveItemKind::UnaryOp(op) => write!(f, "{}", op),
+            DeriveItemKind::BinaryOp(op) => write!(f, "{op}"),
+            DeriveItemKind::AssignOp(op) => write!(f, "{op}Assign"),
+            DeriveItemKind::UnaryOp(op) => write!(f, "{op}"),
             DeriveItemKind::Copy => write!(f, "Copy"),
             DeriveItemKind::Clone => write!(f, "Clone"),
             DeriveItemKind::Debug => write!(f, "Debug"),
@@ -930,7 +930,7 @@ impl DeriveEntry {
     fn apply_dump(&self, result: Result<TokenStream>) -> TokenStream {
         match (result, self.dump) {
             (Ok(ts), false) => ts,
-            (Ok(ts), true) => Error::new(self.span, format!("dump:\n{}", ts)).to_compile_error(),
+            (Ok(ts), true) => Error::new(self.span, format!("dump:\n{ts}")).to_compile_error(),
             (Err(e), _) => e.to_compile_error(),
         }
     }
