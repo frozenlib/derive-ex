@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use structmeta::{Flag, NameArgs, Parse, StructMeta};
 use syn::{
     parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, Field,
-    Fields, Ident, Index, ItemEnum, ItemStruct, Path, Result, Type, Variant,
+    Fields, Ident, Index, ItemEnum, ItemStruct, Meta, Path, Result, Type, Variant,
 };
 
 #[derive(StructMeta, Debug)]
@@ -1031,7 +1031,7 @@ impl HelperAttributeKinds {
     }
 
     fn is_match(&self, attr: &Attribute) -> bool {
-        let p = &attr.path;
+        let p = attr.path();
         (self.derive_ex && p.is_ident("derive_ex"))
             || (self.default && p.is_ident("default"))
             || (self.debug && p.is_ident("debug"))
@@ -1191,7 +1191,7 @@ fn remove_attrs(attrs: &mut Vec<Attribute>, kinds: &HelperAttributeKinds) {
 fn parse_derive_ex_attrs<T: Parse>(attrs: &[Attribute]) -> Result<Vec<T>> {
     let mut items = Vec::new();
     for attr in attrs {
-        if attr.path == parse_quote!(derive_ex) {
+        if attr.path() == &parse_quote!(derive_ex) {
             items.push(attr.parse_args()?);
         }
     }
@@ -1200,15 +1200,19 @@ fn parse_derive_ex_attrs<T: Parse>(attrs: &[Attribute]) -> Result<Vec<T>> {
 fn parse_single<T: Parse + Default>(attrs: &[Attribute], name: &str) -> Result<Option<T>> {
     let mut item = None;
     for attr in attrs {
-        if attr.path.is_ident(name) {
+        if attr.path().is_ident(name) {
             if item.is_some() {
                 bail!(attr.span(), "#[{}] was specified twice", name)
             }
-            item = Some(if attr.tokens.is_empty() {
-                Default::default()
-            } else {
-                attr.parse_args()?
-            });
+            match &attr.meta {
+                Meta::Path(_) => item = Some(Default::default()),
+                Meta::List(m) => item = Some(m.parse_args()?),
+                Meta::NameValue(_) => bail!(
+                    attr.meta.span(),
+                    "`name = value` style attribute is not supported for `#[{}]",
+                    name
+                ),
+            }
         }
     }
     Ok(item)
