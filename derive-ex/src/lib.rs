@@ -978,7 +978,7 @@ use syn::{parse2, Item, Result};
 ///
 /// The generated code is output as an error message by using `#[derive_ex(dump)]`.
 ///
-/// ```compile_error
+/// ```compile_fail
 /// #[derive_ex(Clone, dump)]
 /// struct X<T>(T);
 /// ```
