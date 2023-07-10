@@ -8,8 +8,8 @@ use quote::{format_ident, quote, ToTokens};
 use std::collections::HashMap;
 use structmeta::{Flag, NameArgs, Parse, StructMeta};
 use syn::{
-    parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, Field,
-    Fields, Ident, Index, ItemEnum, ItemStruct, Meta, Path, Result, Type, Variant,
+    parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, ExprLit,
+    Field, Fields, Ident, Index, ItemEnum, ItemStruct, Lit, Meta, Path, Result, Type, Variant,
 };
 
 #[derive(StructMeta, Debug)]
@@ -555,13 +555,12 @@ fn build_default_for_struct(
 
     let mut wcb = WhereClauseBuilder::new(&item.generics);
     let use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
-    let value = if let Some(a) = &hattrs.default {
-        a.value.as_ref()
-    } else {
-        None
-    };
+    let value = hattrs
+        .default
+        .as_ref()
+        .and_then(|a| a.value(&parse_quote!(Self)));
     let value = if let Some(value) = value {
-        quote!(#value)
+        value
     } else {
         let ctor_args = build_default_ctor_args(&item.fields, fields, use_bounds, &mut wcb)?;
         quote!(#this_ty_ident #ctor_args)
@@ -590,8 +589,8 @@ fn build_default_for_enum(
 
     let mut wcb = WhereClauseBuilder::new(&item.generics);
     let mut use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
-    let value = if let Some(value) = hattrs.default_value() {
-        quote!(#value)
+    let value = if let Some(value) = hattrs.default_value(&parse_quote!(Self)) {
+        value
     } else {
         let vs: Vec<_> = variants
             .iter()
@@ -651,12 +650,12 @@ fn build_default_ctor_args(
     let trait_ = kind.to_path();
     let mut ctor_args = Vec::new();
     for field in fields {
-        let value = field.hattrs.default_value();
+        let value = field.hattrs.default_value(&field.field.ty);
         if field.hattrs.push_bounds_to(use_bounds, kind, wcb) && value.is_none() {
             wcb.push_bounds_for_field(field.field)
         }
         let value = if let Some(value) = value {
-            value.to_token_stream()
+            value
         } else {
             let field_ty = &field.field.ty;
             quote!(<#field_ty as #trait_>::default())
@@ -1102,12 +1101,8 @@ impl HelperAttributes {
         }
         use_bounds
     }
-    fn default_value(&self) -> Option<&Expr> {
-        if let Some(a) = &self.default {
-            a.value.as_ref()
-        } else {
-            None
-        }
+    fn default_value(&self, ty: &Type) -> Option<TokenStream> {
+        self.default.as_ref()?.value(ty)
     }
     fn is_debug_ignore(&self) -> bool {
         if let Some(a) = &self.debug {
@@ -1181,6 +1176,26 @@ impl HelperAttributeForDefault {
         } else {
             Ok(None)
         }
+    }
+    fn value(&self, ty: &Type) -> Option<TokenStream> {
+        fn need_into(e: &Expr) -> bool {
+            // Because `into` may prevent type inference, use `into` only in the following expressions.
+            matches!(
+                e,
+                Expr::Lit(ExprLit {
+                    lit: Lit::Str(_),
+                    ..
+                }) | Expr::Path(_)
+            )
+        }
+        if let Some(e) = &self.value {
+            return Some(if need_into(e) {
+                quote!(::core::convert::Into::<#ty>::into(#e))
+            } else {
+                quote!(#e)
+            });
+        }
+        None
     }
 }
 

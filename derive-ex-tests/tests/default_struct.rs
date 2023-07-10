@@ -173,6 +173,22 @@ fn default_value_of_struct() {
 }
 
 #[test]
+fn default_value_of_struct_str() {
+    #[derive(Eq, PartialEq, Debug)]
+    #[derive_ex(Default)]
+    #[default("abc")]
+    struct X(String);
+
+    impl<'a> From<&'a str> for X {
+        fn from(s: &'a str) -> Self {
+            X(s.into())
+        }
+    }
+
+    assert_eq!(X::default(), X("abc".into()));
+}
+
+#[test]
 fn default_value_of_field() {
     #[derive(Eq, PartialEq, Debug)]
     #[derive_ex(Default)]
@@ -209,4 +225,23 @@ fn default_value_of_field_default() {
     struct X(#[default(_)] u32);
 
     assert_eq!(X::default(), X(0));
+}
+
+#[test]
+fn default_value_of_field_lit_str() {
+    #[derive(Eq, PartialEq, Debug)]
+    #[derive_ex(Default)]
+    struct X(#[default("abc")] String);
+
+    assert_eq!(X::default(), X("abc".into()));
+}
+
+#[test]
+fn default_value_of_field_path() {
+    const ABC: &str = "abc";
+    #[derive(Eq, PartialEq, Debug)]
+    #[derive_ex(Default)]
+    struct X(#[default(ABC)] String);
+
+    assert_eq!(X::default(), X("abc".into()));
 }

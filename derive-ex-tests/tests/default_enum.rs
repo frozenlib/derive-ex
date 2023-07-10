@@ -296,6 +296,23 @@ fn default_value_of_enum() {
 }
 
 #[test]
+fn default_value_of_enum_str() {
+    #[derive(Eq, PartialEq, Debug)]
+    #[derive_ex(Default)]
+    #[default("abc")]
+    enum X {
+        A(String),
+    }
+    impl<'a> From<&'a str> for X {
+        fn from(s: &'a str) -> Self {
+            X::A(s.into())
+        }
+    }
+
+    assert_eq!(X::default(), X::A("abc".into()));
+}
+
+#[test]
 fn default_value_of_field() {
     #[derive(Eq, PartialEq, Debug)]
     #[derive_ex(Default)]
@@ -304,4 +321,15 @@ fn default_value_of_field() {
     }
 
     assert_eq!(X::default(), X::A(50));
+}
+
+#[test]
+fn default_value_of_field_str() {
+    #[derive(Eq, PartialEq, Debug)]
+    #[derive_ex(Default)]
+    enum X {
+        A(#[default("abc")] String),
+    }
+
+    assert_eq!(X::default(), X::A("abc".into()));
 }

@@ -329,6 +329,23 @@ enum X {
 assert_eq!(X::default(), X::B);
 ```
 
+If a string literal or a single path is specified in `#[default(...)]`, conversion by `Into` is performed.
+
+```rust
+use derive_ex::derive_ex;
+
+#[derive(Debug, PartialEq)]
+#[derive_ex(Default)]
+struct X(#[default("abc")]String);
+assert_eq!(X::default(), X("abc".into()));
+
+const S: &str = "xyz";
+#[derive(Debug, PartialEq)]
+#[derive_ex(Default)]
+struct Y(#[default(S)]String);
+assert_eq!(Y::default(), Y(S.into()));
+```
+
 The standard `#[derive(Default)]` sets `Default` constraint on the generic parameters, while `#[derive_ex(Default)]` sets `Default` constraint on the type of field containing generic parameters.
 
 For example, to derive `Default` for the following type
