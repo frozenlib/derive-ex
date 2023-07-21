@@ -4,6 +4,7 @@ mod test_utils;
 use derive_ex::derive_ex;
 
 #[test]
+#[allow(clippy::default_constructed_unit_structs)]
 fn unit_struct() {
     #[derive(Eq, PartialEq, Debug)]
     #[derive_ex(Default)]
