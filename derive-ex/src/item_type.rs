@@ -154,6 +154,7 @@ fn build_binary_op(
             (false, false) => quote!(#ty : #trait_<#ty, Output = #ty>),
         });
         quote! {
+            #[automatically_derived]
             impl #impl_g #trait_<#rhs_ty> for #self_ty #wheres {
                 type Output = #this_ty;
                 fn #func_name(self, rhs: #rhs_ty) -> Self::Output {
@@ -203,6 +204,7 @@ fn build_assign_op(
             false => parse_quote!(#ty : #trait_<#ty>),
         });
         quote! {
+            #[automatically_derived]
             impl #impl_g #trait_<#rhs_ty> for #this_ty #wheres {
                 fn #func_name(&mut self, rhs: #rhs_ty) {
                     #(#exprs;)*
@@ -249,6 +251,7 @@ fn build_unary_op(
             false => quote!(#ty : #trait_<Output = #ty>),
         });
         quote! {
+            #[automatically_derived]
             impl #impl_g #trait_ for #self_ty #wheres {
                 type Output = #this_ty;
                 fn #func_name(self) -> Self::Output {
@@ -380,6 +383,7 @@ fn build_copy_for_struct(
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {}
     })
 }
@@ -403,6 +407,7 @@ fn build_copy_for_enum(
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {}
     })
 }
@@ -435,6 +440,7 @@ fn build_debug_for_struct(
     )?;
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 #expr
@@ -482,6 +488,7 @@ fn build_debug_for_enum(
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match self {
@@ -569,6 +576,7 @@ fn build_default_for_struct(
     };
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             fn default() -> Self {
                 #value
@@ -635,6 +643,7 @@ fn build_default_for_enum(
     };
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             fn default() -> Self {
                 #value
@@ -712,6 +721,7 @@ fn build_deref_for_struct(
 
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             #content
         }

@@ -21,6 +21,7 @@ fn unit() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn _struct() {
     let a = {
         #[derive_ex(Debug)]
@@ -86,6 +87,7 @@ fn ignore() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn non_exhaustive() {
     let a = {
         #[derive_ex(Debug)]
@@ -158,6 +160,7 @@ fn generics_ignore() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn generics_transparent() {
     use std::fmt::Debug;
 

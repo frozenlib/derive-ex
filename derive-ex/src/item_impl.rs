@@ -158,6 +158,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
                     let l_expr = change_owned(quote!(self), &this, impl_l_ref, call_l_ref);
                     let r_expr = change_owned(quote!(rhs), &rhs, impl_r_ref, call_r_ref);
                     quote! {
+                        #[automatically_derived]
                         impl #impl_g #binary_trait<#impl_rhs> for #impl_this #where_g {
                             type Output = #output;
                             fn #binary_func(self, rhs: #impl_rhs) -> Self::Output {
@@ -171,6 +172,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
                 let l = ref_type_with(&this, call_l_ref);
                 let l_expr = change_owned(quote!(self), &this, true, call_l_ref);
                 quote! {
+                    #[automatically_derived]
                     impl #impl_g #assign_trait<#rhs> for #this #where_g {
                         fn #assign_func(&mut self, rhs: #rhs) {
                             *self = <#l as #binary_trait<#rhs>>::#binary_func(#l_expr, rhs)
@@ -208,6 +210,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
                 let this = this_orig;
                 let rhs = &rhs_orig;
                 ts.extend(quote! {
+                    #[automatically_derived]
                     impl #impl_g #binary_trait<#rhs> for #this #where_g {
                         type Output = #this;
                         fn #binary_func(mut self, rhs: #rhs) -> Self::Output {
