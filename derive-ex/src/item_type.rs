@@ -289,6 +289,7 @@ fn build_clone_for_struct(
     let ctor_args = build_ctor_args(&item.fields, &ctor_args);
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             fn clone(&self) -> Self {
                 #this_ty_ident #ctor_args
@@ -345,6 +346,7 @@ fn build_clone_for_enum(
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
+        #[automatically_derived]
         impl #impl_g #trait_ for #this_ty #wheres {
             fn clone(&self) -> Self {
                 match self {

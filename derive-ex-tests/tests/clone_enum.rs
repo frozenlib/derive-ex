@@ -82,6 +82,7 @@ fn generics_contains_self() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn bound_enum_trait() {
     trait MyTrait {}
 
@@ -97,6 +98,7 @@ fn bound_enum_trait() {
     assert_impl!(!Clone, X<u8, u8>);
 }
 #[test]
+#[allow(dead_code)]
 fn bound_enum_common() {
     trait MyTrait {}
 
@@ -113,6 +115,7 @@ fn bound_enum_common() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn bound_variant_trait() {
     trait MyTrait {}
 
@@ -133,6 +136,7 @@ fn bound_variant_trait() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn bound_variant_common() {
     trait MyTrait {}
 
@@ -153,6 +157,7 @@ fn bound_variant_common() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn bound_field_trait() {
     trait MyTrait {}
 
@@ -169,6 +174,7 @@ fn bound_field_trait() {
 }
 
 #[test]
+#[allow(dead_code)]
 fn bound_field_common() {
     trait MyTrait {}
 

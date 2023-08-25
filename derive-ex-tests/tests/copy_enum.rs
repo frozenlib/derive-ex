@@ -5,6 +5,8 @@ use std::marker::PhantomData;
 mod test_utils;
 
 #[test]
+#[allow(dead_code)]
+
 fn copy_enum() {
     #[derive(Clone)]
     struct NonCopy;
