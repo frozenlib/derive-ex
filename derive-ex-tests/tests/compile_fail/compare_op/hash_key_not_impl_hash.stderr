@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `NoHash: Hash` is not satisfied
+ --> tests/compile_fail/compare_op/hash_key_not_impl_hash.rs:8:18
+  |
+8 |     #[hash(key = NoHash)]
+  |                  ^^^^^^ the trait `Hash` is not implemented for `NoHash`
+  |
+help: consider annotating `NoHash` with `#[derive(Hash)]`
+  |
+4 + #[derive(Hash)]
+5 | struct NoHash;
+  |

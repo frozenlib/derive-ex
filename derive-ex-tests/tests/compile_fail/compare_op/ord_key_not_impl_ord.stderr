@@ -1,0 +1,11 @@
+error[E0277]: the trait bound `NotOrd: Ord` is not satisfied
+ --> tests/compile_fail/compare_op/ord_key_not_impl_ord.rs:8:17
+  |
+8 |     #[ord(key = NotOrd)]
+  |                 ^^^^^^ the trait `Ord` is not implemented for `NotOrd`
+  |
+help: consider annotating `NotOrd` with `#[derive(Ord)]`
+  |
+4 + #[derive(Ord)]
+5 | struct NotOrd;
+  |

@@ -147,7 +147,7 @@ fn generics() {
 }
 
 #[test]
-fn generics_ignore() {
+fn generics_skip() {
     use std::fmt::Debug;
 
     #[derive_ex(Debug)]

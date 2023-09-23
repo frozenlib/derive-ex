@@ -1,0 +1,5 @@
+error: When `#[derive_ex(Eq)]` is specified, `#[eq(key = ...)]` must be used instead of `#[partial_eq(key = ...)]`.
+ --> tests/compile_fail/compare_op/eq_with_parital_eq_key.rs:4:29
+  |
+4 | struct X(#[partial_eq(key = $.len())] String);
+  |                             ^

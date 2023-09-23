@@ -1,0 +1,12 @@
+error[E0277]: can't compare `NotPartialOrd` with `NotPartialOrd`
+ --> tests/compile_fail/compare_op/partial_ord_key_not_impl_partial_ord.rs:8:25
+  |
+8 |     #[partial_ord(key = NotPartialOrd)]
+  |                         ^^^^^^^^^^^^^ no implementation for `NotPartialOrd < NotPartialOrd` and `NotPartialOrd > NotPartialOrd`
+  |
+  = help: the trait `PartialOrd` is not implemented for `NotPartialOrd`
+help: consider annotating `NotPartialOrd` with `#[derive(PartialOrd)]`
+  |
+4 + #[derive(PartialOrd)]
+5 | struct NotPartialOrd;
+  |

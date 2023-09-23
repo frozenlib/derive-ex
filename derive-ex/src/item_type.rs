@@ -1,16 +1,22 @@
+use std::collections::HashMap;
+
+use proc_macro2::{Span, TokenStream};
+use quote::{format_ident, quote, ToTokens};
+use structmeta::{Flag, NameArgs, NameValue, Parse, StructMeta};
+use syn::{
+    parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, ExprLit,
+    Field, Fields, Ident, Index, ItemEnum, ItemStruct, Lit, Meta, Path, Result, Type, Variant,
+};
+
 use crate::{
     bound::{Bound, Bounds, WhereClauseBuilder},
     common::BinaryOp,
     syn_utils::expand_self,
 };
-use proc_macro2::{Span, TokenStream};
-use quote::{format_ident, quote, ToTokens};
-use std::collections::HashMap;
-use structmeta::{Flag, NameArgs, Parse, StructMeta};
-use syn::{
-    parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, ExprLit,
-    Field, Fields, Ident, Index, ItemEnum, ItemStruct, Lit, Meta, Path, Result, Type, Variant,
-};
+
+use self::compare_op::{build_compare_op, HelperAttribtuesForCompareOp};
+
+mod compare_op;
 
 #[derive(StructMeta, Debug)]
 #[struct_meta(name_filter = "snake_case")]
@@ -69,6 +75,7 @@ fn build_by_item_struct_core(
             DeriveItemKind::BinaryOp(op) => build_binary_op(item, op, &e, &fields),
             DeriveItemKind::AssignOp(op) => build_assign_op(item, op, &e, &fields),
             DeriveItemKind::UnaryOp(op) => build_unary_op(item, op, &e, &fields),
+            DeriveItemKind::CompareOp(op) => build_compare_op(item, op, &e, &fields),
             DeriveItemKind::Copy => build_copy_for_struct(item, &e, &fields),
             DeriveItemKind::Clone => build_clone_for_struct(item, &e, &fields),
             DeriveItemKind::Debug => build_debug_for_struct(item, &e, &hattrs, &fields),
@@ -266,6 +273,7 @@ fn build_unary_op(
     }
     Ok(ts)
 }
+
 fn build_clone_for_struct(
     item: &ItemStruct,
     e: &DeriveEntry,
@@ -509,13 +517,11 @@ fn build_debug_expr(
     let kind = DeriveItemKind::Debug;
     let mut transparent_field = None;
     for field in fields {
-        if let Some(a) = &field.hattrs.debug {
-            if let Some(span) = a.transparent.span {
-                if transparent_field.is_some() {
-                    bail!(span, "only one field can be set `#[debug(transparent)]`");
-                }
-                transparent_field = Some(field);
+        if let Some(span) = field.hattrs.debug.transparent.span {
+            if transparent_field.is_some() {
+                bail!(span, "only one field can be set `#[debug(transparent)]`");
             }
+            transparent_field = Some(field);
         }
     }
     let expr = if let Some(field) = transparent_field {
@@ -784,10 +790,64 @@ impl std::fmt::Display for UnaryOp {
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
+enum CompareOp {
+    Ord,
+    PartialOrd,
+    Eq,
+    PartialEq,
+    Hash,
+}
+impl CompareOp {
+    fn from_str(s: &str) -> Option<Self> {
+        Some(match s {
+            "Ord" => Self::Ord,
+            "PartialOrd" => Self::PartialOrd,
+            "Eq" => Self::Eq,
+            "PartialEq" => Self::PartialEq,
+            "Hash" => Self::Hash,
+            _ => return None,
+        })
+    }
+    fn to_path(self) -> Path {
+        match self {
+            CompareOp::Ord => parse_quote!(::core::cmp::Ord),
+            CompareOp::PartialOrd => parse_quote!(::core::cmp::PartialOrd),
+            CompareOp::Eq => parse_quote!(::core::cmp::Eq),
+            CompareOp::PartialEq => parse_quote!(::core::cmp::PartialEq),
+            CompareOp::Hash => parse_quote!(::core::hash::Hash),
+        }
+    }
+    fn to_str(self) -> &'static str {
+        match self {
+            CompareOp::Ord => "Ord",
+            CompareOp::PartialOrd => "PartialOrd",
+            CompareOp::Eq => "Eq",
+            CompareOp::PartialEq => "PartialEq",
+            CompareOp::Hash => "Hash",
+        }
+    }
+    fn to_str_snake_case(self) -> &'static str {
+        match self {
+            CompareOp::Ord => "ord",
+            CompareOp::PartialOrd => "partial_ord",
+            CompareOp::Eq => "eq",
+            CompareOp::PartialEq => "partial_eq",
+            CompareOp::Hash => "hash",
+        }
+    }
+}
+impl std::fmt::Display for CompareOp {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.to_str().fmt(f)
+    }
+}
+
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Ord, PartialOrd)]
 enum DeriveItemKind {
     BinaryOp(BinaryOp),
     AssignOp(BinaryOp),
     UnaryOp(UnaryOp),
+    CompareOp(CompareOp),
     Copy,
     Clone,
     Debug,
@@ -813,6 +873,9 @@ impl DeriveItemKind {
         }
         if let Some(value) = UnaryOp::from_str(s) {
             return Some(Self::UnaryOp(value));
+        }
+        if let Some(value) = CompareOp::from_str(s) {
+            return Some(Self::CompareOp(value));
         }
         Some(match s {
             "Copy" => Self::Copy,
@@ -855,6 +918,7 @@ impl DeriveItemKind {
                 let ident = format_ident!("{}", op.to_str());
                 parse_quote!(::core::ops::#ident)
             }
+            DeriveItemKind::CompareOp(op) => op.to_path(),
             DeriveItemKind::Copy => parse_quote!(::core::marker::Copy),
             DeriveItemKind::Clone => parse_quote!(::core::clone::Clone),
             DeriveItemKind::Debug => parse_quote!(::core::fmt::Debug),
@@ -870,6 +934,7 @@ impl std::fmt::Display for DeriveItemKind {
             DeriveItemKind::BinaryOp(op) => write!(f, "{op}"),
             DeriveItemKind::AssignOp(op) => write!(f, "{op}Assign"),
             DeriveItemKind::UnaryOp(op) => write!(f, "{op}"),
+            DeriveItemKind::CompareOp(op) => write!(f, "{op}"),
             DeriveItemKind::Copy => write!(f, "Copy"),
             DeriveItemKind::Clone => write!(f, "Clone"),
             DeriveItemKind::Debug => write!(f, "Debug"),
@@ -998,7 +1063,8 @@ impl<'a> FieldEntry<'a> {
         if let Some(ident) = &self.field.ident {
             quote!(#ident)
         } else {
-            let index = Index::from(self.index);
+            let mut index = Index::from(self.index);
+            index.span = self.field.span();
             quote!(#index)
         }
     }
@@ -1016,19 +1082,23 @@ impl<'a> FieldEntry<'a> {
     }
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Default, Copy, Clone)]
 struct HelperAttributeKinds {
     derive_ex: bool,
     default: bool,
     debug: bool,
+    ord: bool,
+    partial_ord: bool,
+    eq: bool,
+    partial_eq: bool,
+    hash: bool,
 }
 
 impl HelperAttributeKinds {
     fn new(derive_ex: bool) -> Self {
         Self {
             derive_ex,
-            default: false,
-            debug: false,
+            ..Self::default()
         }
     }
     fn extend(&mut self, es: &[DeriveEntry]) {
@@ -1036,16 +1106,49 @@ impl HelperAttributeKinds {
             match e.kind {
                 DeriveItemKind::Default => self.default = true,
                 DeriveItemKind::Debug => self.debug = true,
+                DeriveItemKind::CompareOp(op) => match op {
+                    CompareOp::Ord => self.ord = true,
+                    CompareOp::PartialOrd => self.partial_ord = true,
+                    CompareOp::Eq => self.eq = true,
+                    CompareOp::PartialEq => self.partial_eq = true,
+                    CompareOp::Hash => self.hash = true,
+                },
                 _ => {}
             }
+        }
+    }
+    fn is_match_cmp_attr(&self, op: CompareOp) -> bool {
+        match op {
+            CompareOp::Ord => {
+                self.ord
+                    || self.is_match_cmp_attr(CompareOp::PartialEq)
+                    || self.is_match_cmp_attr(CompareOp::Eq)
+            }
+            CompareOp::PartialOrd => {
+                self.partial_ord || self.is_match_cmp_attr(CompareOp::PartialEq)
+            }
+            CompareOp::Eq => self.eq || self.is_match_cmp_attr(CompareOp::PartialEq),
+            CompareOp::PartialEq => self.partial_eq,
+            CompareOp::Hash => self.hash,
         }
     }
 
     fn is_match(&self, attr: &Attribute) -> bool {
         let p = attr.path();
-        (self.derive_ex && p.is_ident("derive_ex"))
-            || (self.default && p.is_ident("default"))
-            || (self.debug && p.is_ident("debug"))
+        let Some(i) = p.get_ident() else {
+            return false;
+        };
+        match i.to_string().as_str() {
+            "derive_ex" => self.derive_ex,
+            "default" => self.default,
+            "debug" => self.debug,
+            "ord" => self.is_match_cmp_attr(CompareOp::Ord),
+            "partial_ord" => self.is_match_cmp_attr(CompareOp::PartialOrd),
+            "eq" => self.is_match_cmp_attr(CompareOp::Eq),
+            "partial_eq" => self.is_match_cmp_attr(CompareOp::PartialEq),
+            "hash" => self.is_match_cmp_attr(CompareOp::Hash),
+            _ => false,
+        }
     }
 
     fn without_derive_ex(&self) -> HelperAttributeKinds {
@@ -1059,7 +1162,8 @@ impl HelperAttributeKinds {
 struct HelperAttributes {
     items: HashMap<DeriveItemKind, DeriveEntry>,
     default: Option<HelperAttributeForDefault>,
-    debug: Option<HelperAttributeForDebug>,
+    debug: HelperAttributeForDebug,
+    cmp: HelperAttribtuesForCompareOp,
 }
 
 impl HelperAttributes {
@@ -1080,12 +1184,15 @@ impl HelperAttributes {
         let debug = if kinds.debug {
             HelperAttributeForDebug::from_attrs(attrs)?
         } else {
-            None
+            HelperAttributeForDebug::default()
         };
+        let cmp = HelperAttribtuesForCompareOp::from_attrs(attrs, kinds)?;
+
         Ok(Self {
             items,
             default,
             debug,
+            cmp,
         })
     }
 
@@ -1102,9 +1209,7 @@ impl HelperAttributes {
             }
         }
         if use_bounds && kind == DeriveItemKind::Debug {
-            if let Some(a) = &self.debug {
-                use_bounds = wcb.push_bounds(&a.bounds)
-            }
+            use_bounds = wcb.push_bounds(&self.debug.bounds)
         }
         if use_bounds {
             if let Some(a) = self.items.get(&kind) {
@@ -1117,11 +1222,7 @@ impl HelperAttributes {
         self.default.as_ref()?.value(ty)
     }
     fn is_debug_ignore(&self) -> bool {
-        if let Some(a) = &self.debug {
-            a.ignore.value()
-        } else {
-            false
-        }
+        self.debug.ignore.value()
     }
 }
 
@@ -1139,15 +1240,15 @@ struct HelperAttributeForDebug {
     bounds: Bounds,
 }
 impl HelperAttributeForDebug {
-    fn from_attrs(attrs: &[Attribute]) -> Result<Option<Self>> {
+    fn from_attrs(attrs: &[Attribute]) -> Result<Self> {
         if let Some(args) = parse_single::<ArgsForDebug>(attrs, "debug")? {
-            Ok(Some(Self {
+            Ok(Self {
                 transparent: args.transparent,
                 ignore: args.ignore,
                 bounds: Bounds::from(&args.bound),
-            }))
+            })
         } else {
-            Ok(None)
+            Ok(Self::default())
         }
     }
 }
@@ -1209,6 +1310,15 @@ impl HelperAttributeForDefault {
         }
         None
     }
+}
+
+#[derive(StructMeta, Default, Debug)]
+struct ArgsForCompareOp {
+    ignore: Flag,
+    reverse: Flag,
+    by: Option<NameValue<Expr>>,
+    key: Option<NameValue<Expr>>,
+    bound: Option<NameArgs<Vec<Bound>>>,
 }
 
 fn remove_attrs(attrs: &mut Vec<Attribute>, kinds: &HelperAttributeKinds) {
