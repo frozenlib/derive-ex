@@ -1,7 +1,5 @@
-#[macro_use]
-mod test_utils;
-
 use derive_ex::derive_ex;
+use derive_ex_tests::{assert_eq_hash, assert_impl};
 use std::hash::Hash;
 
 #[test]
@@ -36,7 +34,7 @@ fn hash_tuple() {
 #[test]
 fn hash_hash_key() {
     #[derive(Debug)]
-    #[derive_ex(Hash, Eq, PartialEq)]
+    #[derive_ex(Hash)]
     struct X(#[hash(key = $.len())] String);
 
     assert_eq_hash(X("ABC".into()), X("DEF".into()));
@@ -63,7 +61,7 @@ fn hash_ord_key() {
 #[test]
 fn hash_key_ref() {
     #[derive(Debug)]
-    #[derive_ex(Hash, Eq, PartialEq)]
+    #[derive_ex(Hash)]
     struct X(#[hash(key = $.as_str())] String);
 
     assert_impl!(Hash, X);
@@ -72,7 +70,7 @@ fn hash_key_ref() {
 #[test]
 fn hash_key_expr() {
     #[derive(Debug)]
-    #[derive_ex(Hash, Eq, PartialEq)]
+    #[derive_ex(Hash)]
     struct X(#[hash(key = $.len() + $.len())] String);
 
     assert_eq_hash(X("ABC".into()), X("DEF".into()));
@@ -81,7 +79,7 @@ fn hash_key_expr() {
 #[test]
 fn hash_hash_by() {
     #[derive(Debug)]
-    #[derive_ex(Hash, Eq, PartialEq)]
+    #[derive_ex(Hash)]
     struct X(#[hash(by = |this, state| this.len().hash(state))] String);
 
     assert_eq_hash(X("ABC".into()), X("DEF".into()));
@@ -169,7 +167,7 @@ fn hash_hash_bound_type() {
     struct P<T>(T, T);
 
     #[derive(Debug)]
-    #[derive_ex(Hash, Eq, PartialEq)]
+    #[derive_ex(Hash)]
     struct X<T>(#[hash(key = $.0, bound(T))] P<T>);
 
     assert_impl!(Hash, X<u32>);
@@ -210,16 +208,4 @@ fn hash_ord_bound_type() {
     assert_impl!(Ord, X<NoHash>);
     assert_impl!(Hash, X<u32>);
     assert_impl!(!Hash, X<NoHash>);
-}
-
-fn assert_eq_hash<T: Hash>(v0: T, v1: T) {
-    use std::collections::hash_map::DefaultHasher;
-    use std::hash::Hasher;
-    let mut h0 = DefaultHasher::default();
-    v0.hash(&mut h0);
-
-    let mut h1 = DefaultHasher::default();
-    v1.hash(&mut h1);
-
-    assert_eq!(h0.finish(), h1.finish());
 }

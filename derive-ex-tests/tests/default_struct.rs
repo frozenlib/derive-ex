@@ -1,7 +1,5 @@
-#[macro_use]
-mod test_utils;
-
 use derive_ex::derive_ex;
+use derive_ex_tests::assert_impl;
 
 #[test]
 #[allow(clippy::default_constructed_unit_structs)]

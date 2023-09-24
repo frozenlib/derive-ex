@@ -1,7 +1,5 @@
 use derive_ex::derive_ex;
-use test_utils_debug::assert_debug_eq;
-
-mod test_utils_debug;
+use derive_ex_tests::assert_debug_eq;
 
 #[test]
 fn unit() {

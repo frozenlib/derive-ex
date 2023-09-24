@@ -1,4 +1,10 @@
-error: When `#[derive_ex(Eq)]` is specified, `#[eq(by = ...)]` must be used instead of `#[partial_eq(by = ...)]`.
+error: Since `#[partial_eq(by = ...)]` was specified, the default implementation of `Eq` cannot be used.
+       One of the following attributes is required.
+
+       #[eq(key = ...)]
+       #[eq(by = ...)]
+       #[ord(key = ...)]
+       #[ord(by = ...)]
  --> tests/compile_fail/compare_op/eq_with_parital_eq_by.rs:4:28
   |
 4 | struct X(#[partial_eq(by = |l, r| l.len() == r.len())] String);

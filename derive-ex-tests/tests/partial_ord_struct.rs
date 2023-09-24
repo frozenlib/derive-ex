@@ -1,9 +1,7 @@
-#[macro_use]
-mod test_utils;
-
 use std::cmp::Ordering;
 
 use derive_ex::derive_ex;
+use derive_ex_tests::assert_impl;
 
 #[test]
 fn partial_ord_unit() {
@@ -223,10 +221,10 @@ fn partial_ord_auto_bound() {
     #[derive_ex(PartialOrd, PartialEq)]
     struct X<T>(T);
 
-    struct NonPartialOrd;
+    struct NotPartialOrd;
 
     assert_impl!(PartialOrd, X<u32>);
-    assert_impl!(!PartialOrd, X<NonPartialOrd>);
+    assert_impl!(!PartialOrd, X<NotPartialOrd>);
 }
 
 #[test]

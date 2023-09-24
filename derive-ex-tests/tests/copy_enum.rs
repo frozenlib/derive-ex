@@ -1,15 +1,14 @@
 use derive_ex::derive_ex;
 use std::marker::PhantomData;
 
-#[macro_use]
-mod test_utils;
+use derive_ex_tests::assert_impl;
 
 #[test]
 #[allow(dead_code)]
 
 fn copy_enum() {
     #[derive(Clone)]
-    struct NonCopy;
+    struct NotCopy;
 
     #[derive_ex(Copy, Clone)]
     enum AlwaysCopy<T> {
@@ -17,5 +16,5 @@ fn copy_enum() {
         B,
     }
 
-    assert_impl!(Copy, AlwaysCopy<NonCopy>);
+    assert_impl!(Copy, AlwaysCopy<NotCopy>);
 }

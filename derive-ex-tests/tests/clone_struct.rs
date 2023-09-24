@@ -1,9 +1,7 @@
 #![allow(clippy::redundant_clone)]
 
-#[macro_use]
-mod test_utils;
-
 use derive_ex::derive_ex;
+use derive_ex_tests::assert_impl;
 
 #[test]
 fn unit_struct() {

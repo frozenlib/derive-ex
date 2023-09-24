@@ -1,7 +1,5 @@
-#[macro_use]
-mod test_utils;
-
 use derive_ex::derive_ex;
+use derive_ex_tests::assert_impl;
 
 #[test]
 fn partial_eq_unit() {
@@ -103,6 +101,16 @@ fn partial_eq_ord_key() {
     struct X(#[ord(key = $.len())] String);
 
     assert_eq!(X("ABC".into()), X("DEF".into()));
+    assert_ne!(X("A".into()), X("AA".into()));
+}
+
+#[test]
+fn partial_eq_key_identity() {
+    #[derive(Debug)]
+    #[derive_ex(PartialEq)]
+    struct X(#[partial_eq(key = $)] String);
+
+    assert_ne!(X("ABC".into()), X("DEF".into()));
     assert_ne!(X("A".into()), X("AA".into()));
 }
 
@@ -212,10 +220,10 @@ fn partial_eq_auto_bound() {
     #[derive_ex(PartialEq)]
     struct X<T>(T);
 
-    struct NonPartialEq;
+    struct NotPartialEq;
 
     assert_impl!(PartialEq, X<u32>);
-    assert_impl!(!PartialEq, X<NonPartialEq>);
+    assert_impl!(!PartialEq, X<NotPartialEq>);
 }
 
 #[test]
@@ -257,8 +265,9 @@ fn partial_eq_ord_bound() {
     assert_impl!(PartialEq, X<u32>);
     assert_impl!(!PartialEq, X<String>);
 }
+
 #[test]
-fn partial_eq_partial_eq_bound_type() {
+fn partial_eq_partial_eq_bound_type_at_field() {
     #[derive(Debug)]
     struct P<T>(T, T);
 
@@ -270,8 +279,24 @@ fn partial_eq_partial_eq_bound_type() {
     assert_impl!(PartialEq, X<f64>);
     assert_impl!(PartialEq, X<String>);
 }
+
 #[test]
-fn partial_eq_eq_bound_type() {
+fn partial_eq_partial_eq_bound_type_at_type() {
+    #[derive(Debug)]
+    struct P<T>(T, T);
+
+    #[derive(Debug)]
+    #[derive_ex(PartialEq)]
+    #[partial_eq(bound(T))]
+    struct X<T>(#[partial_eq(key = $.0)] P<T>);
+
+    assert_impl!(PartialEq, X<u32>);
+    assert_impl!(PartialEq, X<f64>);
+    assert_impl!(PartialEq, X<String>);
+}
+
+#[test]
+fn partial_eq_eq_bound_type_at_field() {
     #[derive(Debug)]
     struct P<T>(T, T);
 
@@ -285,7 +310,22 @@ fn partial_eq_eq_bound_type() {
 }
 
 #[test]
-fn partial_eq_partial_ord_bound_type() {
+fn partial_eq_eq_bound_type_at_type() {
+    #[derive(Debug)]
+    struct P<T>(T, T);
+
+    #[derive(Debug)]
+    #[derive_ex(PartialEq)]
+    #[eq(bound(T))]
+    struct X<T>(#[eq(key = $.0)] P<T>);
+
+    assert_impl!(PartialEq, X<u32>);
+    assert_impl!(PartialEq, X<f64>);
+    assert_impl!(PartialEq, X<String>);
+}
+
+#[test]
+fn partial_eq_partial_ord_bound_type_at_field() {
     #[derive(Debug)]
     struct P<T>(T, T);
 
@@ -299,13 +339,43 @@ fn partial_eq_partial_ord_bound_type() {
 }
 
 #[test]
-fn partial_eq_ord_bound_type() {
+fn partial_eq_partial_ord_bound_type_at_type() {
+    #[derive(Debug)]
+    struct P<T>(T, T);
+
+    #[derive(Debug)]
+    #[derive_ex(PartialEq)]
+    #[partial_ord(bound(T))]
+    struct X<T>(#[partial_ord(key = $.0)] P<T>);
+
+    assert_impl!(PartialEq, X<u32>);
+    assert_impl!(PartialEq, X<f64>);
+    assert_impl!(PartialEq, X<String>);
+}
+
+#[test]
+fn partial_eq_ord_bound_type_at_field() {
     #[derive(Debug)]
     struct P<T>(T, T);
 
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     struct X<T>(#[ord(key = $.0, bound(T))] P<T>);
+
+    assert_impl!(PartialEq, X<u32>);
+    assert_impl!(PartialEq, X<f64>);
+    assert_impl!(PartialEq, X<String>);
+}
+
+#[test]
+fn partial_eq_ord_bound_type_at_type() {
+    #[derive(Debug)]
+    struct P<T>(T, T);
+
+    #[derive(Debug)]
+    #[derive_ex(PartialEq)]
+    #[ord(bound(T))]
+    struct X<T>(#[ord(key = $.0)] P<T>);
 
     assert_impl!(PartialEq, X<u32>);
     assert_impl!(PartialEq, X<f64>);

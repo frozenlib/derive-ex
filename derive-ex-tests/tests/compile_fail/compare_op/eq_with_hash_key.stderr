@@ -1,0 +1,27 @@
+error: Since `#[hash(key = ...)]` was specified, the default implementation of `Eq` cannot be used.
+       One of the following attributes is required.
+
+       #[eq(key = ...)]
+       #[eq(by = ...)]
+       #[ord(key = ...)]
+       #[ord(by = ...)]
+ --> tests/compile_fail/compare_op/eq_with_hash_key.rs:4:23
+  |
+4 | struct X(#[hash(key = $.len())] String);
+  |                       ^
+
+error: Since `#[hash(key = ...)]` was specified, the default implementation of `PartialEq` cannot be used.
+       One of the following attributes is required.
+
+       #[partial_eq(key = ...)]
+       #[partial_eq(by = ...)]
+       #[eq(key = ...)]
+       #[eq(by = ...)]
+       #[partial_ord(key = ...)]
+       #[partial_ord(by = ...)]
+       #[ord(key = ...)]
+       #[ord(by = ...)]
+ --> tests/compile_fail/compare_op/eq_with_hash_key.rs:4:23
+  |
+4 | struct X(#[hash(key = $.len())] String);
+  |                       ^

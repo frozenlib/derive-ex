@@ -11,3 +11,4 @@ derive-ex = { path = "../derive-ex" }
 
 [dev-dependencies]
 trybuild = "1.0.71"
+ordered-float = "4.1.0"

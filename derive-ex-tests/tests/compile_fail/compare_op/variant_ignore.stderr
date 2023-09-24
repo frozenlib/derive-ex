@@ -1,0 +1,5 @@
+error: cannot specify `ignore` for enum variants
+ --> tests/compile_fail/compare_op/variant_ignore.rs:5:18
+  |
+5 |     #[partial_eq(ignore)]
+  |                  ^^^^^^

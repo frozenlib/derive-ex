@@ -14,7 +14,9 @@ use crate::{
     syn_utils::expand_self,
 };
 
-use self::compare_op::{build_compare_op, HelperAttribtuesForCompareOp};
+use self::compare_op::{
+    build_compare_op_for_enum, build_compare_op_for_struct, HelperAttribtuesForCompareOp,
+};
 
 mod compare_op;
 
@@ -67,7 +69,11 @@ fn build_by_item_struct_core(
 ) -> Result<TokenStream> {
     let es = DeriveEntry::from_root(attr, &item.attrs)?;
     kinds.extend(&es);
-    let hattrs = HelperAttributes::from_attrs(&item.attrs, &kinds.without_derive_ex())?;
+    let hattrs = HelperAttributes::from_attrs(
+        &item.attrs,
+        AttributeTarget::Type,
+        &kinds.without_derive_ex(),
+    )?;
     let fields = FieldEntry::from_fields(&item.fields, kinds)?;
     let mut ts_all = TokenStream::new();
     for e in es {
@@ -75,7 +81,9 @@ fn build_by_item_struct_core(
             DeriveItemKind::BinaryOp(op) => build_binary_op(item, op, &e, &fields),
             DeriveItemKind::AssignOp(op) => build_assign_op(item, op, &e, &fields),
             DeriveItemKind::UnaryOp(op) => build_unary_op(item, op, &e, &fields),
-            DeriveItemKind::CompareOp(op) => build_compare_op(item, op, &e, &fields),
+            DeriveItemKind::CompareOp(op) => {
+                build_compare_op_for_struct(op, item, &e, &hattrs, &fields)
+            }
             DeriveItemKind::Copy => build_copy_for_struct(item, &e, &fields),
             DeriveItemKind::Clone => build_clone_for_struct(item, &e, &fields),
             DeriveItemKind::Debug => build_debug_for_struct(item, &e, &hattrs, &fields),
@@ -107,11 +115,18 @@ fn build_by_item_enum_core(
 ) -> Result<TokenStream> {
     let es = DeriveEntry::from_root(attr, &item.attrs)?;
     kinds.extend(&es);
-    let hattrs = HelperAttributes::from_attrs(&item.attrs, &kinds.without_derive_ex())?;
+    let hattrs = HelperAttributes::from_attrs(
+        &item.attrs,
+        AttributeTarget::Type,
+        &kinds.without_derive_ex(),
+    )?;
     let variants = VariantEntry::from_variants(&item.variants, kinds)?;
     let mut ts_all = TokenStream::new();
     for e in es {
         let result = match e.kind {
+            DeriveItemKind::CompareOp(op) => {
+                build_compare_op_for_enum(op, item, &e, &hattrs, &variants)
+            }
             DeriveItemKind::Copy => build_copy_for_enum(item, &e, &variants),
             DeriveItemKind::Clone => build_clone_for_enum(item, &e, &variants),
             DeriveItemKind::Debug => build_debug_for_enum(item, &e, &hattrs, &variants),
@@ -332,7 +347,9 @@ fn build_clone_for_enum(
         let mut pat_args_r = Vec::new();
         let mut ctor_args = Vec::new();
         let mut clone_from_exprs = Vec::new();
-        let use_bounds = variant.hattrs.push_bounds_to(use_bounds, kind, &mut wcb);
+        let use_bounds = variant
+            .hattrs
+            .push_bounds_to_raw(use_bounds, false, kind, &mut wcb);
         for field in &variant.fields {
             let field_ty = &field.field.ty;
             let lhs = field.make_ident("l");
@@ -478,11 +495,6 @@ fn build_debug_for_enum(
             let var = field.make_ident("");
             quote!(#var)
         };
-        let mut pat_args = Vec::new();
-        for field in &variant.fields {
-            let var = field.make_ident("");
-            pat_args.push(quote!(#var));
-        }
         let expr = build_debug_expr(
             variant_ident,
             &variant.variant.fields,
@@ -491,8 +503,8 @@ fn build_debug_for_enum(
             to_expr,
             &mut wcb,
         )?;
-        let pat = build_ctor_args(&variant.variant.fields, &pat_args);
-        arms.push(quote!(Self::#variant_ident #pat => #expr));
+        let pat = variant.make_pat("");
+        arms.push(quote!(#pat => #expr));
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
     Ok(quote! {
@@ -741,7 +753,7 @@ fn with_ref(source: &impl ToTokens, is_ref: bool) -> TokenStream {
         quote!(#source)
     }
 }
-fn build_ctor_args(fields: &Fields, values: &[TokenStream]) -> TokenStream {
+fn build_ctor_args(fields: &Fields, values: &[impl ToTokens]) -> TokenStream {
     match fields {
         Fields::Named(fields) => {
             let names = fields.named.iter().map(|f| f.ident.as_ref().unwrap());
@@ -798,6 +810,14 @@ enum CompareOp {
     Hash,
 }
 impl CompareOp {
+    const VARIANTS: &[Self] = &[
+        Self::Ord,
+        Self::PartialOrd,
+        Self::Eq,
+        Self::PartialEq,
+        Self::Hash,
+    ];
+
     fn from_str(s: &str) -> Option<Self> {
         Some(match s {
             "Ord" => Self::Ord,
@@ -834,6 +854,19 @@ impl CompareOp {
             CompareOp::PartialEq => "partial_eq",
             CompareOp::Hash => "hash",
         }
+    }
+    fn is_effects_to(self, target: Self) -> bool {
+        matches!(
+            (target, self),
+            (Self::Ord, Self::Ord)
+                | (Self::PartialOrd, Self::PartialOrd | Self::Ord)
+                | (Self::Eq, Self::Eq | Self::Ord)
+                | (
+                    Self::PartialEq,
+                    Self::PartialEq | Self::Eq | Self::PartialOrd | Self::Ord
+                )
+                | (Self::Hash, Self::Hash | Self::Eq | Self::Ord)
+        )
     }
 }
 impl std::fmt::Display for CompareOp {
@@ -1023,7 +1056,7 @@ impl<'a> VariantEntry<'a> {
         Ok(Self {
             variant,
             fields: FieldEntry::from_fields(&variant.fields, kinds)?,
-            hattrs: HelperAttributes::from_attrs(&variant.attrs, kinds)?,
+            hattrs: HelperAttributes::from_attrs(&variant.attrs, AttributeTarget::Variant, kinds)?,
         })
     }
     fn from_variants(
@@ -1034,6 +1067,28 @@ impl<'a> VariantEntry<'a> {
             .into_iter()
             .map(|variant| Self::new(variant, kinds))
             .collect()
+    }
+
+    fn make_pat(&self, prefix: &str) -> TokenStream {
+        self.make_pat_with_self_path(prefix, quote!(Self))
+    }
+    fn make_pat_with_self_path(&self, prefix: &str, self_path: impl ToTokens) -> TokenStream {
+        let ident = &self.variant.ident;
+        let mut args = Vec::new();
+        for field in &self.fields {
+            args.push(field.make_ident(prefix));
+        }
+        let args = build_ctor_args(&self.variant.fields, &args);
+        quote!(#self_path::#ident #args)
+    }
+    fn make_pat_wildcard(&self) -> TokenStream {
+        let ident = &self.variant.ident;
+        let args = match &self.variant.fields {
+            Fields::Named(_) => quote!({ .. }),
+            Fields::Unnamed(_) => quote!((..)),
+            Fields::Unit => quote!(),
+        };
+        quote!(Self::#ident #args)
     }
 }
 
@@ -1048,7 +1103,7 @@ impl<'a> FieldEntry<'a> {
         Ok(Self {
             index,
             field,
-            hattrs: HelperAttributes::from_attrs(&field.attrs, kinds)?,
+            hattrs: HelperAttributes::from_attrs(&field.attrs, AttributeTarget::Field, kinds)?,
         })
     }
     fn from_fields(fields: &'a Fields, kinds: &HelperAttributeKinds) -> Result<Vec<Self>> {
@@ -1167,7 +1222,11 @@ struct HelperAttributes {
 }
 
 impl HelperAttributes {
-    fn from_attrs(attrs: &[Attribute], kinds: &HelperAttributeKinds) -> Result<Self> {
+    fn from_attrs(
+        attrs: &[Attribute],
+        target: AttributeTarget,
+        kinds: &HelperAttributeKinds,
+    ) -> Result<Self> {
         let items = if kinds.derive_ex {
             DeriveEntry::from_args_list(&parse_derive_ex_attrs(attrs)?)?
                 .into_iter()
@@ -1187,29 +1246,54 @@ impl HelperAttributes {
             HelperAttributeForDebug::default()
         };
         let cmp = HelperAttribtuesForCompareOp::from_attrs(attrs, kinds)?;
-
-        Ok(Self {
+        let this = Self {
             items,
             default,
             debug,
             cmp,
-        })
+        };
+        this.verify(target)?;
+        Ok(this)
     }
 
     #[must_use]
     fn push_bounds_to(
         &self,
-        mut use_bounds: bool,
+        use_bounds: bool,
         kind: DeriveItemKind,
         wcb: &mut WhereClauseBuilder,
     ) -> bool {
-        if use_bounds && kind == DeriveItemKind::Default {
-            if let Some(a) = &self.default {
-                use_bounds = wcb.push_bounds(&a.bounds)
+        self.push_bounds_to_raw(use_bounds, true, kind, wcb)
+    }
+
+    #[must_use]
+    fn push_bounds_to_without_helper(
+        &self,
+        use_bounds: bool,
+        kind: DeriveItemKind,
+        wcb: &mut WhereClauseBuilder,
+    ) -> bool {
+        self.push_bounds_to_raw(use_bounds, false, kind, wcb)
+    }
+
+    fn push_bounds_to_raw(
+        &self,
+        mut use_bounds: bool,
+        use_helper: bool,
+        kind: DeriveItemKind,
+        wcb: &mut WhereClauseBuilder,
+    ) -> bool {
+        if use_bounds && use_helper {
+            match kind {
+                DeriveItemKind::CompareOp(op) => use_bounds = self.cmp.push_bounds(op, wcb),
+                DeriveItemKind::Debug => use_bounds = wcb.push_bounds(&self.debug.bounds),
+                DeriveItemKind::Default => {
+                    if let Some(a) = &self.default {
+                        use_bounds = wcb.push_bounds(&a.bounds)
+                    }
+                }
+                _ => {}
             }
-        }
-        if use_bounds && kind == DeriveItemKind::Debug {
-            use_bounds = wcb.push_bounds(&self.debug.bounds)
         }
         if use_bounds {
             if let Some(a) = self.items.get(&kind) {
@@ -1218,11 +1302,17 @@ impl HelperAttributes {
         }
         use_bounds
     }
+
     fn default_value(&self, ty: &Type) -> Option<TokenStream> {
         self.default.as_ref()?.value(ty)
     }
     fn is_debug_ignore(&self) -> bool {
         self.debug.ignore.value()
+    }
+
+    fn verify(&self, target: AttributeTarget) -> Result<()> {
+        self.cmp.verify(target)?;
+        Ok(())
     }
 }
 
@@ -1353,4 +1443,11 @@ fn parse_single<T: Parse + Default>(attrs: &[Attribute], name: &str) -> Result<O
         }
     }
     Ok(item)
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+enum AttributeTarget {
+    Type,
+    Variant,
+    Field,
 }
