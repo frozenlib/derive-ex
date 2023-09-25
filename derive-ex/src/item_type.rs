@@ -1113,13 +1113,21 @@ impl<'a> FieldEntry<'a> {
             .map(|(index, field)| Self::new(index, field, kinds))
             .collect()
     }
+    fn span(&self) -> Span {
+        if let Some(ident) = &self.field.ident {
+            return ident.span();
+        }
+        self.field.ty.span()
+    }
 
     fn member(&self) -> TokenStream {
         if let Some(ident) = &self.field.ident {
+            let mut ident = ident.clone();
+            ident.set_span(self.span());
             quote!(#ident)
         } else {
             let mut index = Index::from(self.index);
-            index.span = self.field.span();
+            index.span = self.span();
             quote!(#index)
         }
     }

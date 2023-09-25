@@ -22,7 +22,7 @@ enum ItemSourceKind {
 
 impl ItemSourceKind {
     fn self_of(self, field: &FieldEntry) -> TokenStream {
-        let span = field.field.span();
+        let span = field.span();
         match self {
             ItemSourceKind::Struct => {
                 let member = field.member();
@@ -35,7 +35,7 @@ impl ItemSourceKind {
         }
     }
     fn this_of(self, field: &FieldEntry) -> TokenStream {
-        let span = field.field.span();
+        let span = field.span();
         match self {
             ItemSourceKind::Struct => {
                 let member = field.member();
@@ -48,7 +48,7 @@ impl ItemSourceKind {
         }
     }
     fn other_of(self, field: &FieldEntry) -> TokenStream {
-        let span = field.field.span();
+        let span = field.span();
         match self {
             ItemSourceKind::Struct => {
                 let member = field.member();
@@ -316,7 +316,7 @@ fn build_partial_eq_expr(
     }
 
     *field_used = true;
-    Ok(quote_spanned!(field.field.span()=> ::core::cmp::PartialEq::eq(&(#this), &(#other))))
+    Ok(quote_spanned!(field.span()=> ::core::cmp::PartialEq::eq(&(#this), &(#other))))
 }
 
 fn build_eq_body(
@@ -503,7 +503,7 @@ fn build_partial_ord_expr(
     let op = CompareOp::PartialOrd;
     let ty = &field.field.ty;
     let fn_ident = field.make_ident("__partial_ord_");
-    let span = field.field.span();
+    let span = field.span();
     let this = source.self_of(field);
     let other = source.other_of(field);
     let cmp = &field.hattrs.cmp;
@@ -644,7 +644,7 @@ fn build_ord_expr(
     let op = CompareOp::Ord;
     let ty = &field.field.ty;
     let fn_ident = field.make_ident("__ord_");
-    let span = field.field.span();
+    let span = field.span();
     let this = source.self_of(field);
     let other = source.other_of(field);
     let cmp = &field.hattrs.cmp;
@@ -745,7 +745,7 @@ fn build_hash_expr(
     let op = CompareOp::Hash;
     let ty = &field.field.ty;
     let fn_ident = field.make_ident("__hash_");
-    let span = field.field.span();
+    let span = field.span();
     let this = source.self_of(field);
     let cmp = &field.hattrs.cmp;
 
