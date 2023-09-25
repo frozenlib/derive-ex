@@ -503,7 +503,6 @@ fn build_partial_ord_expr(
     let op = CompareOp::PartialOrd;
     let ty = &field.field.ty;
     let fn_ident = field.make_ident("__partial_ord_");
-    let span = field.span();
     let this = source.self_of(field);
     let other = source.other_of(field);
     let cmp = &field.hattrs.cmp;
@@ -560,7 +559,7 @@ fn build_partial_ord_expr(
     }
 
     *field_used = true;
-    Ok(quote_spanned!(span=> ::core::cmp::PartialOrd::partial_cmp(&(#this), &(#other))))
+    Ok(quote_spanned!(field.span()=> ::core::cmp::PartialOrd::partial_cmp(&(#this), &(#other))))
 }
 
 fn build_ord_body(
@@ -644,7 +643,6 @@ fn build_ord_expr(
     let op = CompareOp::Ord;
     let ty = &field.field.ty;
     let fn_ident = field.make_ident("__ord_");
-    let span = field.span();
     let this = source.self_of(field);
     let other = source.other_of(field);
     let cmp = &field.hattrs.cmp;
@@ -673,7 +671,7 @@ fn build_ord_expr(
     }
 
     *field_used = true;
-    Ok(quote_spanned!(span=> ::core::cmp::Ord::cmp(&(#this), &(#other))))
+    Ok(quote_spanned!(field.span()=> ::core::cmp::Ord::cmp(&(#this), &(#other))))
 }
 
 fn build_hash_body(
@@ -745,7 +743,6 @@ fn build_hash_expr(
     let op = CompareOp::Hash;
     let ty = &field.field.ty;
     let fn_ident = field.make_ident("__hash_");
-    let span = field.span();
     let this = source.self_of(field);
     let cmp = &field.hattrs.cmp;
 
@@ -791,7 +788,7 @@ fn build_hash_expr(
     }
 
     *field_used = true;
-    Ok(quote_spanned!(span=> ::core::hash::Hash::hash(&(#this), state);))
+    Ok(quote_spanned!(field.span()=> ::core::hash::Hash::hash(&(#this), state);))
 }
 
 pub(super) struct HelperAttribtuesForCompareOp {
