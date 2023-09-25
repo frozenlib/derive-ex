@@ -541,7 +541,7 @@ use syn::{parse2, Item, Result};
 ///
 /// If the default trait bounds are specified with a high-priority helper attribute, the trait bounds of a lower-priority helper attribute will be used.
 ///
-/// If by or key is specified with a high-priority helper attribute, the trait bounds of a lower-priority helper attribute will not be used.
+/// If `by = ...` or `key = ...` is specified with a high-priority helper attribute, the trait bounds of a lower-priority helper attribute will not be used.
 ///
 /// For details, see [Specify trait bound](#specify-trait-bound).
 ///
