@@ -507,7 +507,7 @@ use syn::{parse2, Item, Result};
 ///
 /// `#[hash(by = ...)]` only changes the behavior of `Hash`.
 ///
-/// For all other traits affected, it changes the behavior as shown in [the table above](#derive-ord-partialord-eq-partialeq-hash).
+/// Other attributes act on attributes other than `Hash`.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
