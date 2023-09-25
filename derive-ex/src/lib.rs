@@ -25,6 +25,12 @@ use syn::{parse2, Item, Result};
 ///   - [`#[debug(transparent)]`](#debugtransparent)
 ///   - [`#[debug(bounds(...))]`](#debugbounds)
 /// - [Derive `Default`](#derive-default)
+/// - [Derive `Ord`, `PartialOrd`, `Eq`, `PartialEq`, `Hash`](#derive-ord-partialord-eq-partialeq-hash)
+///   - [`#[ord(ignore)]`](#ordignore)
+///   - [`#[ord(reverse)]`](#ordreverse)
+///   - [`#[ord(by = ...)]`](#ordby--)
+///   - [`#[ord(key = ...)]`](#ordkey--)
+///   - [`#[ord(bounds(...))]`](#ordbounds)
 /// - [Derive `Deref`](#derive-deref)
 /// - [Derive `DerefMut`](#derive-derefmut)
 /// - [Derive operators](#derive-operators)
@@ -54,6 +60,7 @@ use syn::{parse2, Item, Result};
 /// | `#[derive_ex(Clone)]`      |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(Debug)]`      |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(Default)]`    |      | ✔      | ✔    | ✔       | ✔     |
+/// | `#[derive_ex(Ord)]`        |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(Deref)]`      |      | ✔      |      |         |       |
 /// | `#[derive_ex(DerefMut)]`   |      | ✔      |      |         |       |
 /// | `#[derive_ex(Add)]`        | ✔    | ✔      |      |         | ✔     |
@@ -62,6 +69,7 @@ use syn::{parse2, Item, Result};
 /// | `#[derive_ex(bound(...))]` |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(dump))]`      | ✔    | ✔      | ✔    |         |       |
 /// | `#[default]`               |      | ✔      | ✔    | ✔       | ✔     |
+/// | `#[ord]`                   |      | ✔      | ✔    | ✔       | ✔     |
 ///
 /// # Derive `Copy`
 ///
@@ -429,6 +437,113 @@ use syn::{parse2, Item, Result};
 /// }
 /// assert_eq!(X::default(), X { a: NoDefault })
 /// ```
+///
+/// # Derive `Ord`, `PartialOrd`, `Eq`, `PartialEq`, `Hash`
+///
+/// `Ord`, `PartialOrd`, `Eq`, `PartialEq`, `Hash` can be derived using common settings.
+///
+/// To avoid repeating settings, one helper attribute affects multiple traits.
+///
+/// The table below shows which helper attributes affect which trait.
+///
+/// The helper attributes in the lines below are applied preferentially.
+///
+/// | attribute             | `Ord` | `PartialOrd` | `Eq` | `PartialEq` | `Hash` |
+/// | --------------------- | ----- | ------------ | ---- | ----------- | ------ |
+/// | `#[ord(...)]`         | ✔     | ✔            | ✔    | ✔           | ✔      |
+/// | `#[partial_ord(...)]` |       | ✔            |      | ✔           |        |
+/// | `#[eq(...)]`          |       |              | ✔    | ✔           | ✔      |
+/// | `#[partial_eq(...)]`  |       |              | ✔    | ✔           |        |
+/// | `#[hash(...)]`        |       |              |      |             | ✔      |
+///
+/// The following table shows the helper attribute arguments and the locations where they can be used.
+///
+/// | argument                   | struct | enum | variant | field | `#[ord]` | `#[partial_ord]` | `#[eq]` | `#[partial_eq]` | `#[hash]` |
+/// | -------------------------- | ------ | ---- | ------- | ----- | -------- | ---------------- | ------- | --------------- | --------- |
+/// | [`ignore`](#ordignore)     |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+/// | [`reverse`](#ordreverse)   |        |      |         | ✔     | ✔        | ✔                |         |                 |           |
+/// | [`by = ...`](#ordby--)     |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+/// | [`key = ...`](#ordkey--)   |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+/// | [`bound(...)`](#ordbounds) | ✔      | ✔    | ✔       | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+///
+/// If you modify the behavior of a specific trait by `by = ...` or `key = ...`, you must also modify the behavior of other traits by `by = ...` or `key = ...`.
+/// Trying to mix modified behavior with default behavior will result in a compilation error.
+///
+/// ## `#[ord(ignore)]`
+///
+/// Specifying `ignore` for a field excludes that field from comparison and hash calculation.
+///
+/// You cannot change whether `ignore` is applied by the trait.
+///
+/// A compile error occurs when trying to apply `ignore` to only some of the traits.
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+///
+/// #[derive_ex(Eq, PartialEq, Debug)]
+/// struct X(#[eq(ignore)] u8);
+///
+/// assert_eq!(X(1), X(2));
+/// ```
+///
+/// ## `#[ord(reverse)]`
+///
+/// Specifying `reverse` for a field reverses the comparison order.
+///
+/// It can also be used together with `by = ...` or `key = ...`.
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+///
+/// #[derive_ex(PartialOrd, PartialEq, Debug)]
+/// struct X(#[partial_ord(reverse)] u8);
+///
+/// assert!(X(1) > X(2));
+/// ```
+///
+/// ## `#[ord(by = ...)]`
+///
+/// You can set up a comparison method by specifying a function with the same signature as the trait's required method.
+///
+/// `#[hash(by = ...)]` only changes the behavior of `Hash`.
+///
+/// For all other traits affected, it changes the behavior as shown in [the table above](#derive-ord-partialord-eq-partialeq-hash).
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+/// use std::cmp::Ordering;
+///
+/// #[derive_ex(Ord, PartialOrd, Eq, PartialEq, Debug)]
+/// struct X(#[ord(by = f64::total_cmp)] f64);
+///
+/// assert_eq!(X(1.0).cmp(&X(2.0)), Ordering::Less);
+/// ```
+///
+/// ## `#[ord(key = ...)]`
+///
+/// Delegates processing to the value of the specified expression.
+///
+/// In this expression, the field itself is represented by `$`.
+///
+/// ```rust
+/// use derive_ex::derive_ex;
+///
+/// #[derive_ex(Eq, PartialEq, Debug)]
+/// struct X(#[eq(key = $.len())] &'static str);
+///
+/// assert_eq!(X("a"), X("b"));
+/// assert_ne!(X("a"), X("aa"));
+/// ```
+///
+/// ## `#[ord(bounds(...))]`
+///
+/// Specify the trait bounds.
+///
+/// If the default trait bounds are specified with a high-priority helper attribute, the trait bounds of a lower-priority helper attribute will be used.
+///
+/// If by or key is specified with a high-priority helper attribute, the trait bounds of a lower-priority helper attribute will not be used.
+///
+/// For details, see [Specify trait bound](#specify-trait-bound).
 ///
 /// # Derive `Deref`
 ///
@@ -846,8 +961,6 @@ use syn::{parse2, Item, Result};
 ///     },
 /// }
 /// ```
-///
-/// In 1, 4, and 7 are available only for `default`.
 ///
 /// In 3, 6, and 9, common trait bound can be set for multiple traits by using it as like `#[derive_ex(Clone, Default, bound(T))]`.
 ///
