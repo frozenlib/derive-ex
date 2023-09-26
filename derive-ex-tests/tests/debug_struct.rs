@@ -182,3 +182,14 @@ fn generics_transparent() {
     assert_impl!(Debug, Y<u32>);
     assert_impl!(Debug, Y<NoDebug>);
 }
+
+#[test]
+fn helper_bound() {
+    use std::fmt::Debug;
+
+    #[derive_ex(Debug)]
+    struct X<T>(#[debug(bound(T:Copy + Debug))] T);
+
+    assert_impl!(Debug, X<u32>);
+    assert_impl!(!Debug, X<String>);
+}
