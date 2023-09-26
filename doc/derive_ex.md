@@ -6,14 +6,14 @@ Improved version of the macro to implement the traits defined in the standard li
 - [Derive `Debug`](#derive-debug)
   - [`#[debug(ignore)]`](#debugignore)
   - [`#[debug(transparent)]`](#debugtransparent)
-  - [`#[debug(bounds(...))]`](#debugbounds)
+  - [`#[debug(bound(...))]`](#debugbound)
 - [Derive `Default`](#derive-default)
 - [Derive `Ord`, `PartialOrd`, `Eq`, `PartialEq`, `Hash`](#derive-ord-partialord-eq-partialeq-hash)
   - [`#[ord(ignore)]`](#ordignore)
   - [`#[ord(reverse)]`](#ordreverse)
   - [`#[ord(by = ...)]`](#ordby--)
   - [`#[ord(key = ...)]`](#ordkey--)
-  - [`#[ord(bounds(...))]`](#ordbounds)
+  - [`#[ord(bound(...))]`](#ordbound)
 - [Derive `Deref`](#derive-deref)
 - [Derive `DerefMut`](#derive-derefmut)
 - [Derive operators](#derive-operators)
@@ -196,7 +196,7 @@ The following helper attribute arguments allow you to customize your `Debug` imp
 | ---------------------------------- | ------ | ---- | ------- | ----- |
 | [`ignore`](#debugignore)           |        |      |         | ✔     |
 | [`transparent`](#debugtransparent) |        |      |         | ✔     |
-| [`bounds(...)`](#debugbounds)      | ✔      | ✔    | ✔       | ✔     |
+| [`bound(...)`](#debugbound)        | ✔      | ✔    | ✔       | ✔     |
 
 ## `#[debug(ignore)]`
 
@@ -228,7 +228,7 @@ struct X {
 assert_eq!(format!("{:?}", X { a: 1, b: 2 }), "2");
 ```
 
-## `#[debug(bounds(...))]`
+## `#[debug(bound(...))]`
 
 The standard `#[derive(Debug)]` sets `Debug` constraint on the generic parameters, while `#[derive_ex(Debug)]` sets `Debug` constraint on the type of field containing generic parameters.
 
@@ -441,13 +441,13 @@ The helper attributes in the lines below are applied preferentially.
 
 The following table shows the helper attribute arguments and the locations where they can be used.
 
-| argument                   | struct | enum | variant | field | `#[ord]` | `#[partial_ord]` | `#[eq]` | `#[partial_eq]` | `#[hash]` |
-| -------------------------- | ------ | ---- | ------- | ----- | -------- | ---------------- | ------- | --------------- | --------- |
-| [`ignore`](#ordignore)     |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
-| [`reverse`](#ordreverse)   |        |      |         | ✔     | ✔        | ✔                |         |                 |           |
-| [`by = ...`](#ordby--)     |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
-| [`key = ...`](#ordkey--)   |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
-| [`bound(...)`](#ordbounds) | ✔      | ✔    | ✔       | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+| argument                  | struct | enum | variant | field | `#[ord]` | `#[partial_ord]` | `#[eq]` | `#[partial_eq]` | `#[hash]` |
+| ------------------------- | ------ | ---- | ------- | ----- | -------- | ---------------- | ------- | --------------- | --------- |
+| [`ignore`](#ordignore)    |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+| [`reverse`](#ordreverse)  |        |      |         | ✔     | ✔        | ✔                |         |                 |           |
+| [`by = ...`](#ordby--)    |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+| [`key = ...`](#ordkey--)  |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+| [`bound(...)`](#ordbound) | ✔      | ✔    | ✔       | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
 
 If you modify the behavior of a specific trait by `by = ...` or `key = ...`, you must also modify the behavior of other traits by `by = ...` or `key = ...`.
 Trying to mix modified behavior with default behavior will result in a compilation error.
@@ -518,7 +518,7 @@ assert_eq!(X("a"), X("b"));
 assert_ne!(X("a"), X("aa"));
 ```
 
-## `#[ord(bounds(...))]`
+## `#[ord(bound(...))]`
 
 Specify the trait bounds.
 
