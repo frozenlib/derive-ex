@@ -48,7 +48,7 @@ Add this to your Cargo.toml:
 
 ```toml
 [dependencies]
-derive-ex = "0.1.6"
+derive-ex = "0.1.7"
 ```
 
 ## Example
