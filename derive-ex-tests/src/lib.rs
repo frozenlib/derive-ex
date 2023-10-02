@@ -1,7 +1,7 @@
 #[cfg(doctest)]
 mod tests {
-    #[doc = include_str!("../../doc/derive_ex.md")]
-    mod derive_ex_md {}
+    #[doc = include_str!("../../README.md")]
+    mod readme_md {}
 }
 
 #[macro_export]
