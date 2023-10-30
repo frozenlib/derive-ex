@@ -15,7 +15,7 @@ use crate::{
 };
 
 use self::compare_op::{
-    build_compare_op_for_enum, build_compare_op_for_struct, HelperAttribtuesForCompareOp,
+    build_compare_op_for_enum, build_compare_op_for_struct, HelperAttributesForCompareOp,
 };
 
 mod compare_op;
@@ -1226,7 +1226,7 @@ struct HelperAttributes {
     items: HashMap<DeriveItemKind, DeriveEntry>,
     default: Option<HelperAttributeForDefault>,
     debug: HelperAttributeForDebug,
-    cmp: HelperAttribtuesForCompareOp,
+    cmp: HelperAttributesForCompareOp,
 }
 
 impl HelperAttributes {
@@ -1253,7 +1253,7 @@ impl HelperAttributes {
         } else {
             HelperAttributeForDebug::default()
         };
-        let cmp = HelperAttribtuesForCompareOp::from_attrs(attrs, kinds)?;
+        let cmp = HelperAttributesForCompareOp::from_attrs(attrs, kinds)?;
         let this = Self {
             items,
             default,

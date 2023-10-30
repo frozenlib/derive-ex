@@ -5,7 +5,7 @@ error: Since `#[partial_ord(by = ...)]` was specified, the default implementatio
        #[eq(by = ...)]
        #[ord(key = ...)]
        #[ord(by = ...)]
- --> tests/compile_fail/compare_op/eq_with_parital_ord_by.rs:4:29
+ --> tests/compile_fail/compare_op/eq_with_partial_ord_by.rs:4:29
   |
 4 | struct X(#[partial_ord(by = |l, r| l.len().partial_cmp(&r.len()))] String);
   |                             ^

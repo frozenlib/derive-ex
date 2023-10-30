@@ -479,7 +479,7 @@ fn build_partial_ord_body(
             quote! {
                 match (self, other) {
                     #(#arms)*
-                    (this, otehr) => {
+                    (this, other) => {
                         #to_index_fn
                         ::core::cmp::PartialOrd::partial_cmp(&to_index(this), &to_index(other))
                     },
@@ -619,7 +619,7 @@ fn build_ord_body(
             quote! {
                 match (self, other) {
                     #(#arms)*
-                    (this, otehr) => {
+                    (this, other) => {
                         #to_index_fn
                         ::core::cmp::Ord::cmp(&to_index(this), &to_index(other))
                     },
@@ -791,39 +791,39 @@ fn build_hash_expr(
     Ok(quote_spanned!(field.span()=> ::core::hash::Hash::hash(&(#this), state);))
 }
 
-pub(super) struct HelperAttribtuesForCompareOp {
-    ord: HelperAttributeForComapreOp,
-    partial_ord: HelperAttributeForComapreOp,
-    eq: HelperAttributeForComapreOp,
-    partial_eq: HelperAttributeForComapreOp,
-    hash: HelperAttributeForComapreOp,
+pub(super) struct HelperAttributesForCompareOp {
+    ord: HelperAttributeForCompareOp,
+    partial_ord: HelperAttributeForCompareOp,
+    eq: HelperAttributeForCompareOp,
+    partial_eq: HelperAttributeForCompareOp,
+    hash: HelperAttributeForCompareOp,
 }
-impl HelperAttribtuesForCompareOp {
+impl HelperAttributesForCompareOp {
     pub fn from_attrs(attrs: &[Attribute], kinds: &HelperAttributeKinds) -> Result<Self> {
         let ord = if kinds.is_match_cmp_attr(CompareOp::Ord) {
-            HelperAttributeForComapreOp::from_attrs(attrs, CompareOp::Ord)?
+            HelperAttributeForCompareOp::from_attrs(attrs, CompareOp::Ord)?
         } else {
-            HelperAttributeForComapreOp::default()
+            HelperAttributeForCompareOp::default()
         };
         let partial_ord = if kinds.is_match_cmp_attr(CompareOp::PartialOrd) {
-            HelperAttributeForComapreOp::from_attrs(attrs, CompareOp::PartialOrd)?
+            HelperAttributeForCompareOp::from_attrs(attrs, CompareOp::PartialOrd)?
         } else {
-            HelperAttributeForComapreOp::default()
+            HelperAttributeForCompareOp::default()
         };
         let eq = if kinds.is_match_cmp_attr(CompareOp::Eq) {
-            HelperAttributeForComapreOp::from_attrs(attrs, CompareOp::Eq)?
+            HelperAttributeForCompareOp::from_attrs(attrs, CompareOp::Eq)?
         } else {
-            HelperAttributeForComapreOp::default()
+            HelperAttributeForCompareOp::default()
         };
         let partial_eq = if kinds.is_match_cmp_attr(CompareOp::PartialEq) {
-            HelperAttributeForComapreOp::from_attrs(attrs, CompareOp::PartialEq)?
+            HelperAttributeForCompareOp::from_attrs(attrs, CompareOp::PartialEq)?
         } else {
-            HelperAttributeForComapreOp::default()
+            HelperAttributeForCompareOp::default()
         };
         let hash = if kinds.is_match_cmp_attr(CompareOp::Hash) {
-            HelperAttributeForComapreOp::from_attrs(attrs, CompareOp::Hash)?
+            HelperAttributeForCompareOp::from_attrs(attrs, CompareOp::Hash)?
         } else {
-            HelperAttributeForComapreOp::default()
+            HelperAttributeForCompareOp::default()
         };
         Ok(Self {
             ord,
@@ -842,7 +842,7 @@ impl HelperAttribtuesForCompareOp {
         }
         use_bounds
     }
-    fn get(&self, op: CompareOp) -> &HelperAttributeForComapreOp {
+    fn get(&self, op: CompareOp) -> &HelperAttributeForCompareOp {
         match op {
             CompareOp::Ord => &self.ord,
             CompareOp::PartialOrd => &self.partial_ord,
@@ -941,14 +941,14 @@ impl HelperAttribtuesForCompareOp {
 }
 
 #[derive(Default)]
-struct HelperAttributeForComapreOp {
+struct HelperAttributeForCompareOp {
     ignore: Flag,
     reverse: Flag,
     by: Option<Expr>,
     key: Option<Template>,
     bounds: Bounds,
 }
-impl HelperAttributeForComapreOp {
+impl HelperAttributeForCompareOp {
     fn from_attrs(attrs: &[Attribute], op: CompareOp) -> Result<Self> {
         if let Some(args) =
             parse_single::<TemplateOf<ArgsForCompareOp>>(attrs, op.to_str_snake_case())?

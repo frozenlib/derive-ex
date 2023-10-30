@@ -5,7 +5,7 @@ error: Since `#[partial_ord(key = ...)]` was specified, the default implementati
        #[eq(by = ...)]
        #[ord(key = ...)]
        #[ord(by = ...)]
- --> tests/compile_fail/compare_op/eq_with_parital_ord_key.rs:4:30
+ --> tests/compile_fail/compare_op/eq_with_partial_ord_key.rs:4:30
   |
 4 | struct X(#[partial_ord(key = $.len())] String);
   |                              ^
