@@ -810,7 +810,7 @@ enum CompareOp {
     Hash,
 }
 impl CompareOp {
-    const VARIANTS: &[Self] = &[
+    const VARIANTS: &'static [Self] = &[
         Self::Ord,
         Self::PartialOrd,
         Self::Eq,
