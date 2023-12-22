@@ -1,7 +1,7 @@
 error[E0277]: can't compare `NotPartialEq` with `_`
- --> tests/compile_fail/compare_op/partial_eq_field_not_impl_partial_eq.rs:7:9
+ --> tests/compile_fail/compare_op/partial_eq_field_not_impl_partial_eq.rs:7:12
   |
 7 |     pub x: NotPartialEq,
-  |         ^ no implementation for `NotPartialEq == _`
+  |            ^^^^^^^^^^^^ no implementation for `NotPartialEq == _`
   |
   = help: the trait `PartialEq<_>` is not implemented for `NotPartialEq`

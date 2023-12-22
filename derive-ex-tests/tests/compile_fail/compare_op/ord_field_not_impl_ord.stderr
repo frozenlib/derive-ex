@@ -1,8 +1,8 @@
 error[E0277]: the trait bound `NotOrd: Ord` is not satisfied
- --> tests/compile_fail/compare_op/ord_field_not_impl_ord.rs:8:5
+ --> tests/compile_fail/compare_op/ord_field_not_impl_ord.rs:8:8
   |
 8 |     x: NotOrd,
-  |     ^ the trait `Ord` is not implemented for `NotOrd`
+  |        ^^^^^^ the trait `Ord` is not implemented for `NotOrd`
   |
 help: consider annotating `NotOrd` with `#[derive(Ord)]`
   |

@@ -1114,9 +1114,10 @@ impl<'a> FieldEntry<'a> {
             .collect()
     }
     fn span(&self) -> Span {
-        if let Some(ident) = &self.field.ident {
-            return ident.span();
-        }
+        // Use `field.ident` span instead of `field.ty`
+        // since field name change by rust-analyzer is not possible when using `field.ident` span
+        //
+        // Same problem with `field.span()`, since it is the same as `field.ident` span when `field.vis` is empty.
         self.field.ty.span()
     }
 
