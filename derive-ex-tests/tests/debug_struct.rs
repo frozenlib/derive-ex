@@ -43,12 +43,12 @@ fn _struct() {
 fn tuple() {
     let a = {
         #[derive_ex(Debug)]
-        struct X(u32, u32);
+        struct X(#[allow(dead_code)] u32, #[allow(dead_code)] u32);
         X(1, 2)
     };
     let e = {
         #[derive(Debug)]
-        struct X(u32, u32);
+        struct X(#[allow(dead_code)] u32, #[allow(dead_code)] u32);
         X(1, 2)
     };
     assert_debug_eq(a, e);
@@ -110,7 +110,11 @@ fn non_exhaustive() {
 #[test]
 fn transparent_field() {
     #[derive_ex(Debug)]
-    struct X(#[debug(transparent)] u32);
+    struct X(
+        #[debug(transparent)]
+        #[allow(dead_code)]
+        u32,
+    );
     assert_debug_eq(X(1), 1);
 }
 
@@ -125,7 +129,11 @@ fn transparent_field_struct() {
     let a = A { a: 10, b: 20 };
 
     #[derive_ex(Debug)]
-    struct X(#[debug(transparent)] A);
+    struct X(
+        #[debug(transparent)]
+        #[allow(dead_code)]
+        A,
+    );
     assert_debug_eq(X(a), a);
 }
 

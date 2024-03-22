@@ -99,7 +99,11 @@ fn hash_hash_ignore() {
 fn hash_eq_ignore() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
-    struct X(#[eq(ignore)] String);
+    struct X(
+        #[eq(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq_hash(X("ABC".into()), X("DEF".into()));
     assert_eq!(X("ABC".into()), X("DEF".into()));
@@ -109,7 +113,11 @@ fn hash_eq_ignore() {
 fn hash_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
-    struct X(#[ord(ignore)] String);
+    struct X(
+        #[ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq_hash(X("ABC".into()), X("DEF".into()));
     assert_eq!(X("ABC".into()), X("DEF".into()));

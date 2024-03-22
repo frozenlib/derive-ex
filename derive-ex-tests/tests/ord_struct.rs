@@ -119,7 +119,11 @@ fn ord_ord_by() {
 fn ord_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(Ord, PartialOrd, Eq, PartialEq)]
-    struct X(#[ord(ignore)] String);
+    struct X(
+        #[ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(X("ABC".into()).cmp(&X("D".into())), Ordering::Equal);
 }

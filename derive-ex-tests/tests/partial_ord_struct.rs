@@ -195,7 +195,11 @@ fn partial_ord_ord_by() {
 fn partial_ord_partial_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(PartialOrd, PartialEq)]
-    struct X(#[partial_ord(ignore)] String);
+    struct X(
+        #[partial_ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(
         X("ABC".into()).partial_cmp(&X("D".into())),
@@ -207,7 +211,11 @@ fn partial_ord_partial_ord_ignore() {
 fn partial_ord_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(PartialOrd, PartialEq)]
-    struct X(#[ord(ignore)] String);
+    struct X(
+        #[ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(
         X("ABC".into()).partial_cmp(&X("D".into())),

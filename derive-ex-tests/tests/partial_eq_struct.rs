@@ -178,7 +178,11 @@ fn partial_eq_ord_by() {
 fn partial_eq_partial_eq_ignore() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
-    struct X(#[partial_eq(ignore)] String);
+    struct X(
+        #[partial_eq(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(X("ABC".into()), X("DEF".into()));
     assert_eq!(X("A".into()), X("AA".into()));
@@ -188,7 +192,11 @@ fn partial_eq_partial_eq_ignore() {
 fn partial_eq_eq_ignore() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
-    struct X(#[eq(ignore)] String);
+    struct X(
+        #[eq(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(X("ABC".into()), X("DEF".into()));
     assert_eq!(X("A".into()), X("AA".into()));
@@ -198,7 +206,11 @@ fn partial_eq_eq_ignore() {
 fn partial_eq_partial_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
-    struct X(#[partial_ord(ignore)] String);
+    struct X(
+        #[partial_ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(X("ABC".into()), X("DEF".into()));
     assert_eq!(X("A".into()), X("AA".into()));
@@ -208,7 +220,11 @@ fn partial_eq_partial_ord_ignore() {
 fn partial_eq_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
-    struct X(#[ord(ignore)] String);
+    struct X(
+        #[ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_eq!(X("ABC".into()), X("DEF".into()));
     assert_eq!(X("A".into()), X("AA".into()));

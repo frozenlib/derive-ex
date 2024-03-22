@@ -140,7 +140,11 @@ fn eq_ord_by() {
 fn eq_eq_ignore() {
     #[derive(Debug)]
     #[derive_ex(Eq, PartialEq)]
-    struct X(#[eq(ignore)] String);
+    struct X(
+        #[eq(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_impl!(Eq, X);
 
@@ -152,7 +156,11 @@ fn eq_eq_ignore() {
 fn eq_ord_ignore() {
     #[derive(Debug)]
     #[derive_ex(Eq, PartialEq)]
-    struct X(#[ord(ignore)] String);
+    struct X(
+        #[ord(ignore)]
+        #[allow(dead_code)]
+        String,
+    );
 
     assert_impl!(Eq, X);
 
