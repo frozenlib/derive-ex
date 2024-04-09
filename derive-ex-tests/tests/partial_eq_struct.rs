@@ -415,3 +415,13 @@ fn partial_eq_partial_eq_key_and_eq_bound() {
     // Therefore, `#[eq(bound(T : Copy + PartialEq))]` is not applied.
     assert_impl!(PartialEq, X<String>);
 }
+
+#[test]
+fn derive_macro() {
+    #[derive(Debug, derive_ex::Ex)]
+    #[derive_ex(PartialEq)]
+    struct X(#[partial_eq(key = $.len())] String);
+
+    assert_eq!(X("ABC".into()), X("DEF".into()));
+    assert_ne!(X("A".into()), X("AA".into()));
+}

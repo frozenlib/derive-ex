@@ -201,3 +201,32 @@ fn helper_bound() {
     assert_impl!(Debug, X<u32>);
     assert_impl!(!Debug, X<String>);
 }
+
+#[test]
+fn derive_macro() {
+    let a = {
+        #[allow(unused)]
+        #[derive(derive_ex::Ex)]
+        #[derive_ex(Debug)]
+        struct X {
+            a: u32,
+            #[debug(ignore)]
+            b: u32,
+        }
+        X { a: 1, b: 2 }
+    };
+    let e = {
+        #[allow(unused)]
+        struct X {
+            a: u32,
+            b: u32,
+        }
+        impl std::fmt::Debug for X {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct("X").field("a", &self.a).finish()
+            }
+        }
+        X { a: 1, b: 2 }
+    };
+    assert_debug_eq(a, e);
+}

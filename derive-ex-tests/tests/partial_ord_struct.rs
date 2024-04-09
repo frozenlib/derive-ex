@@ -322,3 +322,19 @@ fn partial_ord_reverse_2() {
     assert_eq!(X(1, 1).partial_cmp(&X(1, 2)), Some(Ordering::Less));
     assert_eq!(X(1, 1).partial_cmp(&X(2, 1)), Some(Ordering::Greater));
 }
+
+#[test]
+fn derive_macro() {
+    #[derive(Debug, derive_ex::Ex)]
+    #[derive_ex(PartialOrd, PartialEq)]
+    struct X(#[partial_ord(key = $.len())] String);
+
+    assert_eq!(
+        X("ABC".into()).partial_cmp(&X("DEF".into())),
+        Some(Ordering::Equal)
+    );
+    assert_eq!(
+        X("A".into()).partial_cmp(&X("AA".into())),
+        Some(Ordering::Less)
+    );
+}

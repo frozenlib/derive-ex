@@ -4,8 +4,9 @@ use proc_macro2::{Span, TokenStream};
 use quote::{format_ident, quote, ToTokens};
 use structmeta::{Flag, NameArgs, NameValue, Parse, StructMeta};
 use syn::{
-    parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Error, Expr, ExprLit,
-    Field, Fields, Ident, Index, ItemEnum, ItemStruct, Lit, Meta, Path, Result, Type, Variant,
+    parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Data, DataEnum,
+    DataStruct, DeriveInput, Error, Expr, ExprLit, Field, Fields, Ident, Index, ItemEnum,
+    ItemStruct, Lit, Meta, Path, Result, Type, Variant,
 };
 
 use crate::{
@@ -53,17 +54,54 @@ enum DeriveItemArgsOption {
     None,
 }
 
+pub fn build_derive(input: TokenStream) -> Result<TokenStream> {
+    build_from_derive_input(parse2(input)?)
+}
+fn build_from_derive_input(item: DeriveInput) -> Result<TokenStream> {
+    let mut kinds = HelperAttributeKinds::new(true);
+    match &item.data {
+        Data::Struct(data) => {
+            build_by_item_struct_core(None, &to_item_struct(&item, data), &mut kinds)
+        }
+        Data::Enum(data) => build_by_item_enum_core(None, &to_item_enum(&item, data), &mut kinds),
+        Data::Union(_) => bail!(Span::call_site(), "does not support union types"),
+    }
+}
+fn to_item_struct(item: &DeriveInput, data: &DataStruct) -> ItemStruct {
+    ItemStruct {
+        attrs: item.attrs.clone(),
+        vis: item.vis.clone(),
+        struct_token: data.struct_token,
+        ident: item.ident.clone(),
+        generics: item.generics.clone(),
+        fields: data.fields.clone(),
+        semi_token: data.semi_token,
+    }
+}
+fn to_item_enum(item: &DeriveInput, data: &DataEnum) -> ItemEnum {
+    ItemEnum {
+        attrs: item.attrs.clone(),
+        vis: item.vis.clone(),
+        enum_token: data.enum_token,
+        ident: item.ident.clone(),
+        generics: item.generics.clone(),
+        brace_token: data.brace_token,
+        variants: data.variants.clone(),
+    }
+}
+
 pub fn build_by_item_struct(attr: TokenStream, item: &mut ItemStruct) -> Result<TokenStream> {
     let mut kinds = HelperAttributeKinds::new(true);
-    let result = build_by_item_struct_core(attr, item, &mut kinds);
+    let result = build_by_item_struct_core(Some(attr), item, &mut kinds);
     remove_attrs(&mut item.attrs, &kinds);
     for field in &mut item.fields {
         remove_attrs(&mut field.attrs, &kinds)
     }
     result
 }
+
 fn build_by_item_struct_core(
-    attr: TokenStream,
+    attr: Option<TokenStream>,
     item: &ItemStruct,
     kinds: &mut HelperAttributeKinds,
 ) -> Result<TokenStream> {
@@ -98,7 +136,7 @@ fn build_by_item_struct_core(
 }
 pub fn build_by_item_enum(attr: TokenStream, item: &mut ItemEnum) -> Result<TokenStream> {
     let mut kinds = HelperAttributeKinds::new(true);
-    let result = build_by_item_enum_core(attr, item, &mut kinds);
+    let result = build_by_item_enum_core(Some(attr), item, &mut kinds);
     remove_attrs(&mut item.attrs, &kinds);
     for variant in &mut item.variants {
         remove_attrs(&mut variant.attrs, &kinds);
@@ -109,7 +147,7 @@ pub fn build_by_item_enum(attr: TokenStream, item: &mut ItemEnum) -> Result<Toke
     result
 }
 fn build_by_item_enum_core(
-    attr: TokenStream,
+    attr: Option<TokenStream>,
     item: &ItemEnum,
     kinds: &mut HelperAttributeKinds,
 ) -> Result<TokenStream> {
@@ -986,8 +1024,11 @@ struct DeriveEntry {
     bounds_common: Bounds,
 }
 impl DeriveEntry {
-    fn from_root(attr: TokenStream, attrs: &[Attribute]) -> Result<Vec<Self>> {
-        let mut args_list = vec![parse2(attr)?];
+    fn from_root(attr: Option<TokenStream>, attrs: &[Attribute]) -> Result<Vec<Self>> {
+        let mut args_list = Vec::new();
+        if let Some(attr) = attr {
+            args_list.push(parse2(attr)?);
+        }
         args_list.extend(parse_derive_ex_attrs(attrs)?);
         Self::from_args_list(&args_list)
     }

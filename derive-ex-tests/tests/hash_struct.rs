@@ -217,3 +217,12 @@ fn hash_ord_bound_type() {
     assert_impl!(Hash, X<u32>);
     assert_impl!(!Hash, X<NoHash>);
 }
+
+#[test]
+fn derive_macro() {
+    #[derive(Debug, derive_ex::Ex)]
+    #[derive_ex(Hash)]
+    struct X(#[hash(key = $.len())] String);
+
+    assert_eq_hash(X("ABC".into()), X("DEF".into()));
+}

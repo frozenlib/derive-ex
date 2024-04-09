@@ -1148,6 +1148,40 @@ pub fn derive_ex(
     .into()
 }
 
+/// Use attribute macro [`macro@derive_ex`] as derive macro.
+///
+/// [`macro@derive_ex`], being an attribute macro designed to mimic the functionality of the derive macro,
+/// may cause rust-analyzer's assistance to not work correctly in certain cases.
+///
+/// Adding `#[derive(Ex)]` to an item with `#[derive_ex]` will allow rust-analyzer's assistance to work correctly.
+///
+/// In the example below, without `#[derive(Ex)]`,
+/// the jump from `value: String` to the definition of `String` is not possible,
+/// but with `#[derive(Ex)]`, it is possible.
+///
+/// ```
+/// use derive_ex::Ex;
+///
+/// #[derive(Ex)]
+/// #[derive_ex(Eq, PartialEq)]
+/// struct X {
+///     #[eq(key = $.len())]
+///     value: String,
+/// }
+/// ```
+#[proc_macro_derive(
+    Ex,
+    attributes(derive_ex, ord, partial_ord, eq, partial_eq, hash, debug, default)
+)]
+pub fn derive_ex_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    let input: TokenStream = input.into();
+    match item_type::build_derive(input) {
+        Ok(s) => s,
+        Err(e) => e.to_compile_error(),
+    }
+    .into()
+}
+
 fn build(attr: TokenStream, item: TokenStream) -> Result<TokenStream> {
     let mut item: Item = parse2(item)?;
     let ts = match &mut item {

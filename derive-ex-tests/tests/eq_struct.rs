@@ -227,3 +227,15 @@ fn eq_ord_bound_type() {
     assert_impl!(Eq, X<u32>);
     assert_impl!(!Eq, X<f64>);
 }
+
+#[test]
+fn derive_macro() {
+    #[derive(Debug, derive_ex::Ex)]
+    #[derive_ex(Eq, PartialEq)]
+    struct X(#[eq(key = $.len())] String);
+
+    assert_impl!(Eq, X);
+
+    assert_eq!(X("ABC".into()), X("DEF".into()));
+    assert_ne!(X("A".into()), X("AA".into()));
+}

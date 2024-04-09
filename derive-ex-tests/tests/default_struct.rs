@@ -244,3 +244,12 @@ fn default_value_of_field_path() {
 
     assert_eq!(X::default(), X("abc".into()));
 }
+
+#[test]
+fn derive_macro() {
+    #[derive(Eq, PartialEq, Debug, derive_ex::Ex)]
+    #[derive_ex(Default)]
+    struct X(#[default(50)] u32);
+
+    assert_eq!(X::default(), X(50));
+}
