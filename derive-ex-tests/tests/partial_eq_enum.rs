@@ -6,6 +6,11 @@ fn partial_eq_empty() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     enum X {}
+
+    #[allow(dead_code)]
+    fn f(l: X, r: X) -> bool {
+        l == r
+    }
 }
 
 #[test]
@@ -348,9 +353,6 @@ fn partial_eq_ord_bound() {
 
 #[test]
 fn partial_eq_partial_eq_bound_type_at_field() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
@@ -366,9 +368,6 @@ fn partial_eq_partial_eq_bound_type_at_field() {
 
 #[test]
 fn partial_eq_partial_eq_bound_type_at_variant() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
@@ -385,9 +384,6 @@ fn partial_eq_partial_eq_bound_type_at_variant() {
 
 #[test]
 fn partial_eq_partial_eq_bound_type_at_type() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
@@ -404,9 +400,6 @@ fn partial_eq_partial_eq_bound_type_at_type() {
 
 #[test]
 fn partial_eq_eq_bound_type_at_field() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
@@ -422,9 +415,6 @@ fn partial_eq_eq_bound_type_at_field() {
 
 #[test]
 fn partial_eq_eq_bound_type_at_variant() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
@@ -441,9 +431,6 @@ fn partial_eq_eq_bound_type_at_variant() {
 
 #[test]
 fn partial_eq_eq_bound_type_at_type() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(PartialEq)]

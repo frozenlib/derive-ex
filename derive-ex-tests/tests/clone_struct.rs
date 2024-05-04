@@ -7,6 +7,8 @@ use derive_ex_tests::assert_impl;
 fn unit_struct() {
     #[derive_ex(Clone)]
     struct X;
+
+    let _ = X.clone();
 }
 
 #[test]
@@ -68,6 +70,7 @@ fn generics_contains_self() {
 
 #[test]
 fn bound_struct_trait() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -82,6 +85,7 @@ fn bound_struct_trait() {
 
 #[test]
 fn bound_struct_common() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -95,6 +99,7 @@ fn bound_struct_common() {
 }
 #[test]
 fn bound_field_trait() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -122,6 +127,7 @@ fn bound_type() {
 
 #[test]
 fn bound_field_common() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]

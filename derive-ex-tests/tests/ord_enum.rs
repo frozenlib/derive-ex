@@ -196,9 +196,6 @@ fn ord_ord_bound() {
 
 #[test]
 fn ord_partial_ord_bound_type_at_field() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(Ord, PartialOrd, Eq, PartialEq)]
@@ -213,9 +210,6 @@ fn ord_partial_ord_bound_type_at_field() {
 
 #[test]
 fn ord_partial_ord_bound_type_at_variant() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(Ord, PartialOrd, Eq, PartialEq)]
@@ -231,9 +225,6 @@ fn ord_partial_ord_bound_type_at_variant() {
 
 #[test]
 fn ord_partial_ord_bound_type_at_type() {
-    #[derive(Debug)]
-    struct P<T>(T, T);
-
     #[allow(dead_code)]
     #[derive(Debug)]
     #[derive_ex(Ord, PartialOrd, Eq, PartialEq)]
