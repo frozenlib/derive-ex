@@ -10,5 +10,5 @@ publish = false
 derive-ex = { path = "../derive-ex" }
 
 [dev-dependencies]
-trybuild = "1.0.91"
+trybuild = "1.0.93"
 ordered-float = "4.2.0"
