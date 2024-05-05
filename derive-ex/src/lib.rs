@@ -69,6 +69,7 @@ use syn::{parse2, Item, Result};
 /// | `#[derive_ex(bound(...))]` |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[derive_ex(dump))]`      | ✔    | ✔      | ✔    |         |       |
 /// | `#[default]`               |      | ✔      | ✔    | ✔       | ✔     |
+/// | `#[debug]`                 |      | ✔      | ✔    | ✔       | ✔     |
 /// | `#[ord]`                   |      | ✔      | ✔    | ✔       | ✔     |
 ///
 /// # Derive `Copy`

@@ -52,6 +52,7 @@ You can write attributes in the following positions.
 | `#[derive_ex(bound(...))]` |      | ✔      | ✔    | ✔       | ✔     |
 | `#[derive_ex(dump))]`      | ✔    | ✔      | ✔    |         |       |
 | `#[default]`               |      | ✔      | ✔    | ✔       | ✔     |
+| `#[debug]`                 |      | ✔      | ✔    | ✔       | ✔     |
 | `#[ord]`                   |      | ✔      | ✔    | ✔       | ✔     |
 
 # Derive `Copy`
