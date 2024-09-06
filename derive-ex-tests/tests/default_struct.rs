@@ -77,6 +77,7 @@ fn generics_contains_self() {
 
 #[test]
 fn bound_struct_trait() {
+    #[allow(unused)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -91,6 +92,7 @@ fn bound_struct_trait() {
 
 #[test]
 fn bound_struct_common() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -105,6 +107,7 @@ fn bound_struct_common() {
 
 #[test]
 fn bound_field_trait() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -119,6 +122,7 @@ fn bound_field_trait() {
 
 #[test]
 fn bound_struct_helper() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -149,6 +153,7 @@ fn bound_type() {
 
 #[test]
 fn bound_field_common() {
+    #[allow(dead_code)]
     trait MyTrait {}
 
     #[derive(Eq, PartialEq, Debug)]
@@ -202,6 +207,7 @@ fn default_value_of_field_bound() {
     struct NoDefault;
 
     trait New {
+        #[allow(dead_code)]
         fn new() -> Self;
     }
     impl New for NoDefault {
@@ -237,6 +243,7 @@ fn default_value_of_field_lit_str() {
 
 #[test]
 fn default_value_of_field_path() {
+    #[allow(dead_code)]
     const ABC: &str = "abc";
     #[derive(Eq, PartialEq, Debug)]
     #[derive_ex(Default)]
