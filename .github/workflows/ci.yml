@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Rustup update stable
         run: rustup update stable
       - name: Show cargo version
@@ -30,8 +30,11 @@ jobs:
       - name: Rustup toolchain install nightly
         run: rustup toolchain install nightly --allow-downgrade --profile minimal
       - name: Set minimal versions
-        run: cargo +nightly update -Z minimal-versions
+        run: cargo +nightly update -Z direct-minimal-versions
       - name: Build tests (minimal versions)
-        run: cargo +stable test --verbose --no-run
+        run: cargo test --verbose --no-run
       - name: Run tests (minimal versions)
-        run: cargo +stable test --verbose
+        run: cargo test --verbose
+      # - uses: taiki-e/install-action@cargo-hack
+      # - name: Check msrv
+      #   run: cargo hack test --rust-version --workspace --all-targets --ignore-private
