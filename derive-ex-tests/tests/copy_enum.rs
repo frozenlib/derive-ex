@@ -5,7 +5,6 @@ use derive_ex_tests::assert_impl;
 
 #[test]
 #[allow(dead_code)]
-
 fn copy_enum() {
     #[derive(Clone)]
     struct NotCopy;

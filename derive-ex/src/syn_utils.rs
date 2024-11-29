@@ -36,7 +36,7 @@ pub fn expand_self<T: VisitableMut + Clone>(input: &T, to: &Type) -> T {
     struct ExpandSelfVisitor<'a> {
         to: &'a Type,
     }
-    impl<'a> VisitMut for ExpandSelfVisitor<'a> {
+    impl VisitMut for ExpandSelfVisitor<'_> {
         fn visit_type_mut(&mut self, i: &mut Type) {
             let tself: Type = parse_quote!(Self);
             if i == &tself {
@@ -80,7 +80,7 @@ impl GenericParamSet {
             generics: &'a GenericParamSet,
             result: bool,
         }
-        impl<'a, 'ast> Visit<'ast> for Visitor<'a> {
+        impl<'ast> Visit<'ast> for Visitor<'_> {
             fn visit_path(&mut self, i: &'ast syn::Path) {
                 if i.leading_colon.is_none() {
                     if let Some(s) = i.segments.iter().next() {

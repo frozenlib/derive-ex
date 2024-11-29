@@ -73,7 +73,7 @@ enum ItemSource<'a> {
         variants: &'a [VariantEntry<'a>],
     },
 }
-impl<'a> ItemSource<'a> {
+impl ItemSource<'_> {
     fn generics(&self) -> &Generics {
         match self {
             Self::Struct { item, .. } => &item.generics,
