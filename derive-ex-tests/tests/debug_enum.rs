@@ -71,13 +71,13 @@ fn tuple() {
 }
 
 #[test]
-fn ignore() {
+fn skip() {
     let a = {
         #[allow(unused)]
         #[derive_ex(Debug)]
         enum X {
             A {
-                #[debug(ignore)]
+                #[debug(skip)]
                 x: u32,
                 y: u32,
             },

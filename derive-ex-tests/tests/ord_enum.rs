@@ -139,11 +139,11 @@ fn ord_ord_by() {
 }
 
 #[test]
-fn ord_ord_ignore() {
+fn ord_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(Ord, PartialOrd, Eq, PartialEq)]
     enum X {
-        A(#[ord(ignore)] String),
+        A(#[ord(skip)] String),
         B(String),
     }
     assert_eq!(

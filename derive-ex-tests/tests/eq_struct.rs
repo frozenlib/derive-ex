@@ -137,11 +137,11 @@ fn eq_ord_by() {
 }
 
 #[test]
-fn eq_eq_ignore() {
+fn eq_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(Eq, PartialEq)]
     struct X(
-        #[eq(ignore)]
+        #[eq(skip)]
         #[allow(dead_code)]
         String,
     );
@@ -153,11 +153,11 @@ fn eq_eq_ignore() {
 }
 
 #[test]
-fn eq_ord_ignore() {
+fn eq_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(Eq, PartialEq)]
     struct X(
-        #[ord(ignore)]
+        #[ord(skip)]
         #[allow(dead_code)]
         String,
     );

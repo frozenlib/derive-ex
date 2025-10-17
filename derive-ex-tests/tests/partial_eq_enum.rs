@@ -216,11 +216,11 @@ fn partial_eq_ord_by() {
 }
 
 #[test]
-fn partial_eq_partial_eq_ignore() {
+fn partial_eq_partial_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     enum X {
-        A(#[partial_eq(ignore)] String),
+        A(#[partial_eq(skip)] String),
         B(String),
     }
     assert_eq!(X::A("ABC".into()), X::A("DEF".into()));
@@ -232,11 +232,11 @@ fn partial_eq_partial_eq_ignore() {
 }
 
 #[test]
-fn partial_eq_eq_ignore() {
+fn partial_eq_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     enum X {
-        A(#[eq(ignore)] String),
+        A(#[eq(skip)] String),
         B(String),
     }
     assert_eq!(X::A("ABC".into()), X::A("DEF".into()));
@@ -248,11 +248,11 @@ fn partial_eq_eq_ignore() {
 }
 
 #[test]
-fn partial_eq_partial_ord_ignore() {
+fn partial_eq_partial_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     enum X {
-        A(#[partial_ord(ignore)] String),
+        A(#[partial_ord(skip)] String),
         B(String),
     }
     assert_eq!(X::A("ABC".into()), X::A("DEF".into()));
@@ -264,11 +264,11 @@ fn partial_eq_partial_ord_ignore() {
 }
 
 #[test]
-fn partial_eq_ord_ignore() {
+fn partial_eq_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     enum X {
-        A(#[ord(ignore)] String),
+        A(#[ord(skip)] String),
         B(String),
     }
     assert_eq!(X::A("ABC".into()), X::A("DEF".into()));

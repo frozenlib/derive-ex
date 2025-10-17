@@ -175,11 +175,11 @@ fn partial_eq_ord_by() {
 }
 
 #[test]
-fn partial_eq_partial_eq_ignore() {
+fn partial_eq_partial_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     struct X(
-        #[partial_eq(ignore)]
+        #[partial_eq(skip)]
         #[allow(dead_code)]
         String,
     );
@@ -189,11 +189,11 @@ fn partial_eq_partial_eq_ignore() {
 }
 
 #[test]
-fn partial_eq_eq_ignore() {
+fn partial_eq_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     struct X(
-        #[eq(ignore)]
+        #[eq(skip)]
         #[allow(dead_code)]
         String,
     );
@@ -203,11 +203,11 @@ fn partial_eq_eq_ignore() {
 }
 
 #[test]
-fn partial_eq_partial_ord_ignore() {
+fn partial_eq_partial_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     struct X(
-        #[partial_ord(ignore)]
+        #[partial_ord(skip)]
         #[allow(dead_code)]
         String,
     );
@@ -217,11 +217,11 @@ fn partial_eq_partial_ord_ignore() {
 }
 
 #[test]
-fn partial_eq_ord_ignore() {
+fn partial_eq_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialEq)]
     struct X(
-        #[ord(ignore)]
+        #[ord(skip)]
         #[allow(dead_code)]
         String,
     );

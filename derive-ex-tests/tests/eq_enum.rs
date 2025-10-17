@@ -162,11 +162,11 @@ fn eq_ord_by() {
 }
 
 #[test]
-fn eq_eq_ignore() {
+fn eq_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(Eq, PartialEq)]
     enum X {
-        A(#[eq(ignore)] String),
+        A(#[eq(skip)] String),
         B(String),
     }
     assert_impl!(Eq, X);
@@ -180,11 +180,11 @@ fn eq_eq_ignore() {
 }
 
 #[test]
-fn eq_ord_ignore() {
+fn eq_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(Eq, PartialEq)]
     enum X {
-        A(#[ord(ignore)] String),
+        A(#[ord(skip)] String),
         B(String),
     }
     assert_impl!(Eq, X);

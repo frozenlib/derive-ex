@@ -210,11 +210,11 @@ fn partial_ord_ord_by() {
 }
 
 #[test]
-fn partial_ord_partial_ord_ignore() {
+fn partial_ord_partial_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialOrd, PartialEq)]
     enum X {
-        A(#[partial_ord(ignore)] String),
+        A(#[partial_ord(skip)] String),
         B(String),
     }
     assert_eq!(
@@ -232,11 +232,11 @@ fn partial_ord_partial_ord_ignore() {
 }
 
 #[test]
-fn partial_ord_ord_ignore() {
+fn partial_ord_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialOrd, PartialEq)]
     enum X {
-        A(#[ord(ignore)] String),
+        A(#[ord(skip)] String),
         B(String),
     }
     assert_eq!(

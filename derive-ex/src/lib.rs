@@ -21,12 +21,12 @@ use syn::{parse2, Item, Result};
 /// - [Derive `Copy`](#derive-copy)
 /// - [Derive `Clone`](#derive-clone)
 /// - [Derive `Debug`](#derive-debug)
-///   - [`#[debug(ignore)]`](#debugignore)
+///   - [`#[debug(skip)]`](#debugskip)
 ///   - [`#[debug(transparent)]`](#debugtransparent)
 ///   - [`#[debug(bound(...))]`](#debugbound)
 /// - [Derive `Default`](#derive-default)
 /// - [Derive `Ord`, `PartialOrd`, `Eq`, `PartialEq`, `Hash`](#derive-ord-partialord-eq-partialeq-hash)
-///   - [`#[ord(ignore)]`](#ordignore)
+///   - [`#[ord(skip)]`](#ordskip)
 ///   - [`#[ord(reverse)]`](#ordreverse)
 ///   - [`#[ord(by = ...)]`](#ordby--)
 ///   - [`#[ord(key = ...)]`](#ordkey--)
@@ -212,20 +212,22 @@ use syn::{parse2, Item, Result};
 ///
 /// | attribute                          | struct | enum | variant | field |
 /// | ---------------------------------- | ------ | ---- | ------- | ----- |
-/// | [`ignore`](#debugignore)           |        |      |         | ✔     |
+/// | [`skip`](#debugskip)               |        |      |         | ✔     |
 /// | [`transparent`](#debugtransparent) |        |      |         | ✔     |
 /// | [`bound(...)`](#debugbound)        | ✔      | ✔    | ✔       | ✔     |
 ///
-/// ## `#[debug(ignore)]`
+/// ## `#[debug(skip)]`
 ///
-/// By setting `#[debug(ignore)]` to a field, you can exclude that field from debug output.
+/// By setting `#[debug(skip)]` to a field, you can exclude that field from debug output.
+///
+/// For backward compatibility, `#[debug(ignore)]` is also supported and works the same as `skip`.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
 /// #[derive_ex(Debug)]
 /// struct X {
 ///     a: u32,
-///     #[debug(ignore)]
+///     #[debug(skip)]
 ///     b: u32,
 /// }
 /// assert_eq!(format!("{:?}", X { a: 1, b: 2 }), "X { a: 1 }");
@@ -461,7 +463,7 @@ use syn::{parse2, Item, Result};
 ///
 /// | argument                  | struct | enum | variant | field | `#[ord]` | `#[partial_ord]` | `#[eq]` | `#[partial_eq]` | `#[hash]` |
 /// | ------------------------- | ------ | ---- | ------- | ----- | -------- | ---------------- | ------- | --------------- | --------- |
-/// | [`ignore`](#ordignore)    |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
+/// | [`skip`](#ordskip)        |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
 /// | [`reverse`](#ordreverse)  |        |      |         | ✔     | ✔        | ✔                |         |                 |           |
 /// | [`by = ...`](#ordby--)    |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
 /// | [`key = ...`](#ordkey--)  |        |      |         | ✔     | ✔        | ✔                | ✔       | ✔               | ✔         |
@@ -470,19 +472,21 @@ use syn::{parse2, Item, Result};
 /// If you modify the behavior of a specific trait by `by = ...` or `key = ...`, you must also modify the behavior of other traits by `by = ...` or `key = ...`.
 /// Trying to mix modified behavior with default behavior will result in a compilation error.
 ///
-/// ## `#[ord(ignore)]`
+/// ## `#[ord(skip)]`
 ///
-/// Specifying `ignore` for a field excludes that field from comparison and hash calculation.
+/// Specifying `skip` for a field excludes that field from comparison and hash calculation.
 ///
-/// You cannot change whether `ignore` is applied by the trait.
+/// You cannot change whether `skip` is applied by the trait.
 ///
-/// A compile error occurs when trying to apply `ignore` to only some of the traits.
+/// A compile error occurs when trying to apply `skip` to only some of the traits.
+///
+/// For backward compatibility, `ignore` is also supported and works the same as `skip`.
 ///
 /// ```rust
 /// use derive_ex::derive_ex;
 ///
 /// #[derive_ex(Eq, PartialEq, Debug)]
-/// struct X(#[eq(ignore)] u8);
+/// struct X(#[eq(skip)] u8);
 ///
 /// assert_eq!(X(1), X(2));
 /// ```

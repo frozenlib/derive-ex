@@ -192,11 +192,11 @@ fn partial_ord_ord_by() {
 }
 
 #[test]
-fn partial_ord_partial_ord_ignore() {
+fn partial_ord_partial_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialOrd, PartialEq)]
     struct X(
-        #[partial_ord(ignore)]
+        #[partial_ord(skip)]
         #[allow(dead_code)]
         String,
     );
@@ -208,11 +208,11 @@ fn partial_ord_partial_ord_ignore() {
 }
 
 #[test]
-fn partial_ord_ord_ignore() {
+fn partial_ord_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(PartialOrd, PartialEq)]
     struct X(
-        #[ord(ignore)]
+        #[ord(skip)]
         #[allow(dead_code)]
         String,
     );

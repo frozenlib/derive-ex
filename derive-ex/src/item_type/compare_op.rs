@@ -178,7 +178,7 @@ fn build_partial_eq_body(
      -> Result<TokenStream> {
         let mut exprs = Vec::new();
         for field in fields {
-            if field.hattrs.cmp.is_ignore(op)? {
+            if field.hattrs.cmp.is_skip(op)? {
                 continue;
             }
             let mut field_used = false;
@@ -333,7 +333,7 @@ fn build_eq_body(
      -> Result<TokenStream> {
         let mut exprs = Vec::new();
         for field in fields {
-            if field.hattrs.cmp.is_ignore(op)? {
+            if field.hattrs.cmp.is_skip(op)? {
                 continue;
             }
             let mut field_used = false;
@@ -431,7 +431,7 @@ fn build_partial_ord_body(
      -> Result<TokenStream> {
         let mut body = TokenStream::new();
         for field in fields {
-            if field.hattrs.cmp.is_ignore(op)? {
+            if field.hattrs.cmp.is_skip(op)? {
                 continue;
             }
             let mut field_used = false;
@@ -575,7 +575,7 @@ fn build_ord_body(
      -> Result<TokenStream> {
         let mut body = TokenStream::new();
         for field in fields {
-            if field.hattrs.cmp.is_ignore(op)? {
+            if field.hattrs.cmp.is_skip(op)? {
                 continue;
             }
             let mut field_used = false;
@@ -687,7 +687,7 @@ fn build_hash_body(
      -> Result<TokenStream> {
         let mut exprs = Vec::new();
         for field in fields {
-            if field.hattrs.cmp.is_ignore(op)? {
+            if field.hattrs.cmp.is_skip(op)? {
                 continue;
             }
             let mut field_used = false;
@@ -851,16 +851,16 @@ impl HelperAttributesForCompareOp {
             CompareOp::Hash => &self.hash,
         }
     }
-    fn is_ignore(&self, op: CompareOp) -> Result<bool> {
+    fn is_skip(&self, op: CompareOp) -> Result<bool> {
         let bad_flag = |bad: CompareOp, good: CompareOp| -> Result<()> {
-            if let Some(span) = self.get(bad).ignore.span {
+            if let Some(span) = self.get(bad).skip.span {
                 let good = good.to_str_snake_case();
                 let bad = bad.to_str_snake_case();
                 bad_attr_1(
                     span,
                     op,
-                    &format!("{bad}(ignore)"),
-                    &format!("{good}(ignore)"),
+                    &format!("{bad}(skip)"),
+                    &format!("{good}(skip)"),
                 )
             } else {
                 Ok(())
@@ -868,7 +868,7 @@ impl HelperAttributesForCompareOp {
         };
         match op {
             CompareOp::Ord => {
-                if self.ord.ignore.value() {
+                if self.ord.skip.value() {
                     return Ok(true);
                 }
                 bad_flag(CompareOp::PartialOrd, CompareOp::Ord)?;
@@ -877,7 +877,7 @@ impl HelperAttributesForCompareOp {
                 Ok(false)
             }
             CompareOp::PartialOrd => {
-                if self.partial_ord.ignore.value() || self.ord.ignore.value() {
+                if self.partial_ord.skip.value() || self.ord.skip.value() {
                     return Ok(true);
                 }
                 bad_flag(CompareOp::PartialEq, CompareOp::PartialOrd)?;
@@ -885,19 +885,19 @@ impl HelperAttributesForCompareOp {
                 Ok(false)
             }
             CompareOp::Eq => {
-                if self.eq.ignore.value() || self.ord.ignore.value() {
+                if self.eq.skip.value() || self.ord.skip.value() {
                     return Ok(true);
                 }
                 bad_flag(CompareOp::PartialEq, CompareOp::Eq)?;
                 bad_flag(CompareOp::PartialOrd, CompareOp::Ord)?;
                 Ok(false)
             }
-            CompareOp::PartialEq => Ok(self.partial_eq.ignore.value()
-                || self.eq.ignore.value()
-                || self.partial_ord.ignore.value()
-                || self.ord.ignore.value()),
+            CompareOp::PartialEq => Ok(self.partial_eq.skip.value()
+                || self.eq.skip.value()
+                || self.partial_ord.skip.value()
+                || self.ord.skip.value()),
             CompareOp::Hash => {
-                if self.hash.ignore.value() || self.eq.ignore.value() || self.ord.ignore.value() {
+                if self.hash.skip.value() || self.eq.skip.value() || self.ord.skip.value() {
                     return Ok(true);
                 }
                 bad_flag(CompareOp::PartialEq, CompareOp::Eq)?;
@@ -942,7 +942,7 @@ impl HelperAttributesForCompareOp {
 
 #[derive(Default)]
 struct HelperAttributeForCompareOp {
-    ignore: Flag,
+    skip: Flag,
     reverse: Flag,
     by: Option<Expr>,
     key: Option<Template>,
@@ -955,7 +955,11 @@ impl HelperAttributeForCompareOp {
         {
             let args = args.0;
             Ok(Self {
-                ignore: args.ignore,
+                skip: if args.skip.value() || args.ignore.value() {
+                    Flag { span: args.skip.span.or(args.ignore.span) }
+                } else {
+                    Flag::NONE
+                },
                 reverse: args.reverse,
                 by: args.by.map(|x| x.value),
                 key: args.key.map(|x| Template::new(x.value)),
@@ -992,8 +996,8 @@ impl HelperAttributeForCompareOp {
                 if let Some(span) = self.reverse.span {
                     bail!(span, "cannot specify `reverse` for type");
                 }
-                if let Some(span) = self.ignore.span {
-                    bail!(span, "cannot specify `ignore` for type");
+                if let Some(span) = self.skip.span {
+                    bail!(span, "cannot specify `skip` for type");
                 }
             }
             AttributeTarget::Variant => {
@@ -1006,8 +1010,8 @@ impl HelperAttributeForCompareOp {
                 if let Some(span) = self.reverse.span {
                     bail!(span, "cannot specify `reverse` for enum variants");
                 }
-                if let Some(span) = self.ignore.span {
-                    bail!(span, "cannot specify `ignore` for enum variants");
+                if let Some(span) = self.skip.span {
+                    bail!(span, "cannot specify `skip` for enum variants");
                 }
             }
             AttributeTarget::Field => {}

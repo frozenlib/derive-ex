@@ -55,13 +55,13 @@ fn tuple() {
 }
 
 #[test]
-fn ignore() {
+fn skip() {
     let a = {
         #[allow(unused)]
         #[derive_ex(Debug)]
         struct X {
             a: u32,
-            #[debug(ignore)]
+            #[debug(skip)]
             b: u32,
         }
         X { a: 1, b: 2 }
@@ -155,7 +155,7 @@ fn generics_skip() {
     use std::fmt::Debug;
 
     #[derive_ex(Debug)]
-    struct X<T>(#[debug(ignore)] T);
+    struct X<T>(#[debug(skip)] T);
 
     struct NoDebug;
 
@@ -207,6 +207,34 @@ fn derive_macro() {
     let a = {
         #[allow(unused)]
         #[derive(derive_ex::Ex)]
+        #[derive_ex(Debug)]
+        struct X {
+            a: u32,
+            #[debug(skip)]
+            b: u32,
+        }
+        X { a: 1, b: 2 }
+    };
+    let e = {
+        #[allow(unused)]
+        struct X {
+            a: u32,
+            b: u32,
+        }
+        impl std::fmt::Debug for X {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct("X").field("a", &self.a).finish()
+            }
+        }
+        X { a: 1, b: 2 }
+    };
+    assert_debug_eq(a, e);
+}
+#[test]
+fn ignore_compatibility() {
+    // Test that `ignore` still works for backward compatibility
+    let a = {
+        #[allow(unused)]
         #[derive_ex(Debug)]
         struct X {
             a: u32,

@@ -1,0 +1,5 @@
+error: When `#[derive_ex(Eq)]` is specified, `#[eq(skip)]` must be used instead of `#[partial_eq(skip)]`.
+ --> tests/compile_fail/compare_op/eq_with_partial_eq_skip.rs:4:23
+  |
+4 | struct X(#[partial_eq(ignore)] String);
+  |                       ^^^^^^

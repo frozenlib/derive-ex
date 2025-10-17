@@ -123,11 +123,11 @@ fn hash_hash_by() {
 }
 
 #[test]
-fn hash_hash_ignore() {
+fn hash_hash_skip() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
     enum X {
-        A(#[hash(ignore)] String),
+        A(#[hash(skip)] String),
         B(String),
     }
     assert_impl!(Hash, X);
@@ -139,11 +139,11 @@ fn hash_hash_ignore() {
 }
 
 #[test]
-fn hash_eq_ignore() {
+fn hash_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
     enum X {
-        A(#[eq(ignore)] String),
+        A(#[eq(skip)] String),
         B(String),
     }
     assert_impl!(Hash, X);
@@ -155,11 +155,11 @@ fn hash_eq_ignore() {
 }
 
 #[test]
-fn hash_ord_ignore() {
+fn hash_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
     enum X {
-        A(#[ord(ignore)] String),
+        A(#[ord(skip)] String),
         B(String),
     }
     assert_impl!(Hash, X);

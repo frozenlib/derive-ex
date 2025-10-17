@@ -86,21 +86,21 @@ fn hash_hash_by() {
 }
 
 #[test]
-fn hash_hash_ignore() {
+fn hash_hash_skip() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
-    struct X(#[hash(ignore)] String);
+    struct X(#[hash(skip)] String);
 
     assert_eq_hash(X("ABC".into()), X("DEF".into()));
     assert_ne!(X("ABC".into()), X("DEF".into()));
 }
 
 #[test]
-fn hash_eq_ignore() {
+fn hash_eq_skip() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
     struct X(
-        #[eq(ignore)]
+        #[eq(skip)]
         #[allow(dead_code)]
         String,
     );
@@ -110,11 +110,11 @@ fn hash_eq_ignore() {
 }
 
 #[test]
-fn hash_ord_ignore() {
+fn hash_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(Hash, Eq, PartialEq)]
     struct X(
-        #[ord(ignore)]
+        #[ord(skip)]
         #[allow(dead_code)]
         String,
     );

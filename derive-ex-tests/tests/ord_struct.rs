@@ -116,11 +116,11 @@ fn ord_ord_by() {
 }
 
 #[test]
-fn ord_ord_ignore() {
+fn ord_ord_skip() {
     #[derive(Debug)]
     #[derive_ex(Ord, PartialOrd, Eq, PartialEq)]
     struct X(
-        #[ord(ignore)]
+        #[ord(skip)]
         #[allow(dead_code)]
         String,
     );

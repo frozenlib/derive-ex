@@ -590,7 +590,7 @@ fn build_debug_expr(
         };
         expr.extend(quote!(f.#debug_x(::core::stringify!(#ident))));
         for field in fields {
-            if !field.hattrs.is_debug_ignore() {
+            if !field.hattrs.is_debug_skip() {
                 let e = to_expr(field);
                 let member = field.member();
                 let span = field.span();
@@ -1357,8 +1357,8 @@ impl HelperAttributes {
     fn default_value(&self, ty: &Type) -> Option<TokenStream> {
         self.default.as_ref()?.value(ty)
     }
-    fn is_debug_ignore(&self) -> bool {
-        self.debug.ignore.value()
+    fn is_debug_skip(&self) -> bool {
+        self.debug.skip.value()
     }
 
     fn verify(&self, target: AttributeTarget) -> Result<()> {
@@ -1370,6 +1370,7 @@ impl HelperAttributes {
 #[derive(StructMeta, Debug, Default)]
 struct ArgsForDebug {
     transparent: Flag,
+    skip: Flag,
     ignore: Flag,
     bound: Option<NameArgs<Vec<Bound>>>,
 }
@@ -1377,7 +1378,7 @@ struct ArgsForDebug {
 #[derive(Default)]
 struct HelperAttributeForDebug {
     transparent: Flag,
-    ignore: Flag,
+    skip: Flag,
     bounds: Bounds,
 }
 impl HelperAttributeForDebug {
@@ -1385,7 +1386,11 @@ impl HelperAttributeForDebug {
         if let Some(args) = parse_single::<ArgsForDebug>(attrs, "debug")? {
             Ok(Self {
                 transparent: args.transparent,
-                ignore: args.ignore,
+                skip: if args.skip.value() || args.ignore.value() {
+                    Flag { span: args.skip.span.or(args.ignore.span) }
+                } else {
+                    Flag::NONE
+                },
                 bounds: Bounds::from(&args.bound),
             })
         } else {
@@ -1455,6 +1460,7 @@ impl HelperAttributeForDefault {
 
 #[derive(StructMeta, Default, Debug)]
 struct ArgsForCompareOp {
+    skip: Flag,
     ignore: Flag,
     reverse: Flag,
     by: Option<NameValue<Expr>>,
