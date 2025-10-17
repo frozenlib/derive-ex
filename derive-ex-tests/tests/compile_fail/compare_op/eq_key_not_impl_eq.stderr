@@ -5,14 +5,14 @@ error[E0277]: the trait bound `f64: std::cmp::Eq` is not satisfied
   |                ^ the trait `std::cmp::Eq` is not implemented for `f64`
   |
   = help: the following other types implement trait `std::cmp::Eq`:
-            isize
-            i8
+            i128
             i16
             i32
             i64
-            i128
-            usize
-            u8
+            i8
+            isize
+            u128
+            u16
           and $N others
 note: required by a bound in `_eq`
  --> tests/compile_fail/compare_op/eq_key_not_impl_eq.rs:5:16
