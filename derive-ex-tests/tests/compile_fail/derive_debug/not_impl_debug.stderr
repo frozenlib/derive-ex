@@ -1,12 +1,11 @@
 error[E0277]: `NotImplDebug` doesn't implement `Debug`
- --> tests/compile_fail/derive_debug/not_impl_debug.rs:4:10
+ --> tests/compile_fail/derive_debug/not_impl_debug.rs:7:12
   |
-4 | #[derive(derive_ex::Ex)]
-  |          ^^^^^^^^^^^^^ the trait `Debug` is not implemented for `NotImplDebug`
+7 |     field: NotImplDebug,
+  |            ^^^^^^^^^^^^ the trait `Debug` is not implemented for `NotImplDebug`
   |
   = note: add `#[derive(Debug)]` to `NotImplDebug` or manually `impl Debug for NotImplDebug`
   = note: required for the cast from `&NotImplDebug` to `&dyn Debug`
-  = note: this error originates in the derive macro `derive_ex::Ex` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider annotating `NotImplDebug` with `#[derive(Debug)]`
   |
 3 + #[derive(Debug)]

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use proc_macro2::{Span, TokenStream};
-use quote::{format_ident, quote, ToTokens};
+use quote::{format_ident, quote, quote_spanned, ToTokens};
 use structmeta::{Flag, NameArgs, NameValue, Parse, StructMeta};
 use syn::{
     parse::Parse, parse2, parse_quote, spanned::Spanned, token, Attribute, Data, DataEnum,
@@ -491,7 +491,7 @@ fn build_debug_for_struct(
     let use_bounds = e.push_bounds_to_with(hattrs, kind, &mut wcb);
     let to_expr = |field: &FieldEntry| {
         let member = field.member();
-        quote!(&self.#member)
+        quote_spanned!(field.span() => &self.#member)
     };
     let expr = build_debug_expr(
         this_ty_ident,
@@ -531,7 +531,7 @@ fn build_debug_for_enum(
         let use_bounds = variant.hattrs.push_bounds_to(use_bounds, kind, &mut wcb);
         let to_expr = |field: &FieldEntry| {
             let var = field.make_ident("");
-            quote!(#var)
+            quote_spanned!(field.span() => #var)
         };
         let expr = build_debug_expr(
             variant_ident,
@@ -575,9 +575,9 @@ fn build_debug_expr(
         }
     }
     let expr = if let Some(field) = transparent_field {
-        field.push_bounds_to(use_bounds, kind, wcb);
         let e = to_expr(field);
-        quote!(::core::fmt::Debug::fmt(#e, f))
+        field.push_bounds_to(use_bounds, kind, wcb);
+        quote_spanned!(field.span() => ::core::fmt::Debug::fmt(#e, f))
     } else {
         let is_named = match fields_source {
             Fields::Named(_) => true,
@@ -593,9 +593,10 @@ fn build_debug_expr(
             if !field.hattrs.is_debug_ignore() {
                 let e = to_expr(field);
                 let member = field.member();
+                let span = field.span();
                 expr.extend(match is_named {
-                    true => quote! (.field(::core::stringify!(#member), #e)),
-                    false => quote! (.field(#e)),
+                    true => quote_spanned!(span => .field(::core::stringify!(#member), #e)),
+                    false => quote_spanned!(span => .field(#e)),
                 });
                 field.push_bounds_to(use_bounds, kind, wcb);
             }
