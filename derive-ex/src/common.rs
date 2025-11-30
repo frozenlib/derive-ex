@@ -1,3 +1,7 @@
+use proc_macro2::TokenStream;
+use quote::quote;
+use syn::{punctuated::Punctuated, Attribute, Meta, Path};
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub enum BinaryOp {
     Add,
@@ -61,4 +65,30 @@ impl std::fmt::Display for BinaryOp {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_str())
     }
+}
+
+pub fn build_allow_deprecated(attr: &[Attribute]) -> TokenStream {
+    if needs_allow_deprecated(attr) {
+        quote!(#[allow(deprecated)])
+    } else {
+        quote!()
+    }
+}
+
+fn needs_allow_deprecated(attrs: &[Attribute]) -> bool {
+    attrs.iter().any(|attr| {
+        if attr.path().is_ident("deprecated") {
+            return true;
+        }
+        if attr.path().is_ident("allow") {
+            if let Meta::List(meta_list) = &attr.meta {
+                if let Ok(nested) =
+                    meta_list.parse_args_with(Punctuated::<Path, syn::Token![,]>::parse_terminated)
+                {
+                    return nested.iter().any(|path| path.is_ident("deprecated"));
+                }
+            }
+        }
+        false
+    })
 }

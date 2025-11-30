@@ -172,3 +172,28 @@ fn clone_from() {
     x.clone_from(&X::new());
     assert!(x.0.by_clone_from);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn clone_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Clone)]
+    struct X;
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn clone_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Clone)]
+    struct Y;
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Clone)]
+    struct X(Y);
+}

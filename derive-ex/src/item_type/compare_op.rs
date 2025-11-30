@@ -10,8 +10,8 @@ use syn::{
 };
 
 use super::{
-    parse_single, ArgsForCompareOp, AttributeTarget, CompareOp, DeriveEntry, DeriveItemKind,
-    FieldEntry, HelperAttributeKinds, HelperAttributes, VariantEntry,
+    build_allow_deprecated, parse_single, ArgsForCompareOp, AttributeTarget, CompareOp,
+    DeriveEntry, DeriveItemKind, FieldEntry, HelperAttributeKinds, HelperAttributes, VariantEntry,
 };
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -92,6 +92,12 @@ impl ItemSource<'_> {
             Self::Enum { .. } => ItemSourceKind::Enum,
         }
     }
+    fn attrs(&self) -> &[Attribute] {
+        match self {
+            Self::Struct { item, .. } => &item.attrs,
+            Self::Enum { item, .. } => &item.attrs,
+        }
+    }
 }
 
 pub(super) fn build_compare_op_for_struct(
@@ -153,8 +159,10 @@ fn build_compare_op(
         ),
     };
 
+    let allow_deprecated = build_allow_deprecated(source.attrs());
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         #[allow(clippy::double_parens)]
         #[allow(unused_parens)]
         impl #impl_g #trait_ for #this_ty #wheres {
@@ -856,12 +864,7 @@ impl HelperAttributesForCompareOp {
             if let Some(span) = self.get(bad).skip.span {
                 let good = good.to_str_snake_case();
                 let bad = bad.to_str_snake_case();
-                bad_attr_1(
-                    span,
-                    op,
-                    &format!("{bad}(skip)"),
-                    &format!("{good}(skip)"),
-                )
+                bad_attr_1(span, op, &format!("{bad}(skip)"), &format!("{good}(skip)"))
             } else {
                 Ok(())
             }
@@ -956,7 +959,9 @@ impl HelperAttributeForCompareOp {
             let args = args.0;
             Ok(Self {
                 skip: if args.skip.value() || args.ignore.value() {
-                    Flag { span: args.skip.span.or(args.ignore.span) }
+                    Flag {
+                        span: args.skip.span.or(args.ignore.span),
+                    }
                 } else {
                     Flag::NONE
                 },

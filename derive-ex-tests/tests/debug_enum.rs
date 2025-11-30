@@ -120,3 +120,32 @@ fn transparent() {
     let e = 1;
     assert_debug_eq(a, e);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn debug_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Debug)]
+    enum X {
+        A,
+    }
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn debug_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Debug)]
+    struct Y;
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Debug)]
+    enum X {
+        A(Y),
+    }
+}

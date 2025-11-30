@@ -1,4 +1,7 @@
-use crate::{common::BinaryOp, syn_utils::expand_self};
+use crate::{
+    common::{build_allow_deprecated, BinaryOp},
+    syn_utils::expand_self,
+};
 use proc_macro2::{Span, TokenStream};
 use quote::quote;
 use std::fmt::Display;
@@ -142,6 +145,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
     let assign_func = assign_op.to_func_ident();
     let assign_trait = assign_op.to_trait_path();
 
+    let allow_deprecated = build_allow_deprecated(&item_impl.attrs);
     let mut ts = TokenStream::new();
     match op.form {
         OpForm::Binary => {
@@ -159,6 +163,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
                     let r_expr = change_owned(quote!(rhs), &rhs, impl_r_ref, call_r_ref);
                     quote! {
                         #[automatically_derived]
+                        #allow_deprecated
                         impl #impl_g #binary_trait<#impl_rhs> for #impl_this #where_g {
                             type Output = #output;
                             fn #binary_func(self, rhs: #impl_rhs) -> Self::Output {
@@ -173,6 +178,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
                 let l_expr = change_owned(quote!(self), &this, true, call_l_ref);
                 quote! {
                     #[automatically_derived]
+                    #allow_deprecated
                     impl #impl_g #assign_trait<#rhs> for #this #where_g {
                         fn #assign_func(&mut self, rhs: #rhs) {
                             *self = <#l as #binary_trait<#rhs>>::#binary_func(#l_expr, rhs)
@@ -211,6 +217,7 @@ pub fn build_by_item_impl(attr: TokenStream, item_impl: &ItemImpl) -> Result<Tok
                 let rhs = &rhs_orig;
                 ts.extend(quote! {
                     #[automatically_derived]
+                    #allow_deprecated
                     impl #impl_g #binary_trait<#rhs> for #this #where_g {
                         type Output = #this;
                         fn #binary_func(mut self, rhs: #rhs) -> Self::Output {

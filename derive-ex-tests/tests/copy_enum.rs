@@ -17,3 +17,32 @@ fn copy_enum() {
 
     assert_impl!(Copy, AlwaysCopy<NotCopy>);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn copy_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Copy, Clone)]
+    enum X {
+        A,
+    }
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn copy_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Copy, Clone)]
+    struct Y;
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Copy, Clone)]
+    enum X {
+        A(Y),
+    }
+}

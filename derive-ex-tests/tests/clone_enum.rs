@@ -210,3 +210,32 @@ fn bound_none() {
 
     assert_impl!(Clone, X<NoClone>);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn clone_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Clone)]
+    enum X {
+        A,
+    }
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn clone_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Clone)]
+    struct Y;
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Clone)]
+    enum X {
+        A(Y),
+    }
+}

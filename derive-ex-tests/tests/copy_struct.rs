@@ -25,3 +25,28 @@ fn bound() {
     assert_impl!(Copy, Test<u32, NotCopy>);
     assert_impl!(!Copy, Test<NotCopy, u32>);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn copy_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Copy, Clone)]
+    struct X;
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn copy_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Copy, Clone)]
+    struct Y;
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Copy, Clone)]
+    struct X(Y);
+}

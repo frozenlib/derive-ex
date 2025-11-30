@@ -60,3 +60,71 @@ fn with_bound() {
     assert_impl!(!Deref, X<String>);
     assert_impl!(!DerefMut, X<String>);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn deref_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Deref)]
+    struct X(u32);
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn deref_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    struct Y(u32);
+    #[allow(deprecated)]
+    impl std::ops::Deref for Y {
+        type Target = u32;
+        fn deref(&self) -> &u32 {
+            &self.0
+        }
+    }
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Deref)]
+    struct X(Y);
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn deref_mut_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Deref, DerefMut)]
+    struct X(u32);
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn deref_mut_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    struct Y(u32);
+    #[allow(deprecated)]
+    impl std::ops::Deref for Y {
+        type Target = u32;
+        fn deref(&self) -> &u32 {
+            &self.0
+        }
+    }
+    #[allow(deprecated)]
+    impl std::ops::DerefMut for Y {
+        fn deref_mut(&mut self) -> &mut u32 {
+            &mut self.0
+        }
+    }
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Deref, DerefMut)]
+    struct X(Y);
+}

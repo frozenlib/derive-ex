@@ -260,3 +260,28 @@ fn derive_macro() {
 
     assert_eq!(X::default(), X(50));
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn default_deprecated() {
+    #[deprecated]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Default)]
+    struct X;
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn default_allow_deprecated() {
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Default)]
+    struct Y;
+
+    #[allow(deprecated)]
+    #[derive(derive_ex::Ex)]
+    #[derive_ex(Default)]
+    struct X(Y);
+}

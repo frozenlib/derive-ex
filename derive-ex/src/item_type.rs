@@ -11,7 +11,7 @@ use syn::{
 
 use crate::{
     bound::{Bound, Bounds, WhereClauseBuilder},
-    common::BinaryOp,
+    common::{build_allow_deprecated, BinaryOp},
     syn_utils::expand_self,
 };
 
@@ -191,6 +191,7 @@ fn build_binary_op(
     let trait_ = kind.to_path();
     let func_name = format_ident!("{}", op.to_func_name());
 
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     let build = |lhs_is_ref: bool, rhs_is_ref: bool| {
         let self_ty = with_ref(&this_ty, lhs_is_ref);
         let rhs_ty = with_ref(&this_ty, rhs_is_ref);
@@ -215,6 +216,7 @@ fn build_binary_op(
         });
         quote! {
             #[automatically_derived]
+            #allow_deprecated
             impl #impl_g #trait_<#rhs_ty> for #self_ty #wheres {
                 type Output = #this_ty;
                 fn #func_name(self, rhs: #rhs_ty) -> Self::Output {
@@ -246,6 +248,7 @@ fn build_assign_op(
     let trait_ = kind.to_path();
     let func_name = format_ident!("{}_assign", op.to_func_name());
 
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     let build = |rhs_is_ref: bool| {
         let rhs_ty = with_ref(&this_ty, rhs_is_ref);
         let mut wcb = WhereClauseBuilder::new(&generics);
@@ -265,6 +268,7 @@ fn build_assign_op(
         });
         quote! {
             #[automatically_derived]
+            #allow_deprecated
             impl #impl_g #trait_<#rhs_ty> for #this_ty #wheres {
                 fn #func_name(&mut self, rhs: #rhs_ty) {
                     #(#exprs;)*
@@ -293,6 +297,7 @@ fn build_unary_op(
     let trait_ = kind.to_path();
     let func_name = format_ident!("{}", op.to_func_name());
 
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     let build = |lhs_is_ref: bool| {
         let self_ty = with_ref(&this_ty, lhs_is_ref);
         let mut wcb = WhereClauseBuilder::new(&generics);
@@ -312,6 +317,7 @@ fn build_unary_op(
         });
         quote! {
             #[automatically_derived]
+            #allow_deprecated
             impl #impl_g #trait_ for #self_ty #wheres {
                 type Output = #this_ty;
                 fn #func_name(self) -> Self::Output {
@@ -352,8 +358,10 @@ fn build_clone_for_struct(
     }
     let ctor_args = build_ctor_args(&item.fields, &ctor_args);
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             fn clone(&self) -> Self {
                 #this_ty_ident #ctor_args
@@ -411,8 +419,10 @@ fn build_clone_for_enum(
         });
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             fn clone(&self) -> Self {
                 match self {
@@ -445,8 +455,10 @@ fn build_copy_for_struct(
         field.push_bounds_to(use_bounds, kind, &mut wcb);
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {}
     })
 }
@@ -469,8 +481,10 @@ fn build_copy_for_enum(
         }
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {}
     })
 }
@@ -502,8 +516,10 @@ fn build_debug_for_struct(
         &mut wcb,
     )?;
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 #expr
@@ -545,8 +561,10 @@ fn build_debug_for_enum(
         arms.push(quote!(#pat => #expr));
     }
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 match self {
@@ -632,8 +650,10 @@ fn build_default_for_struct(
         quote!(#this_ty_ident #ctor_args)
     };
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             fn default() -> Self {
                 #value
@@ -699,8 +719,10 @@ fn build_default_for_enum(
         quote!(#this_ty_ident::#variant_ident #ctor_args)
     };
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             fn default() -> Self {
                 #value
@@ -777,8 +799,10 @@ fn build_deref_for_struct(
     };
 
     let wheres = wcb.build(|ty| quote!(#ty : #trait_));
+    let allow_deprecated = build_allow_deprecated(&item.attrs);
     Ok(quote! {
         #[automatically_derived]
+        #allow_deprecated
         impl #impl_g #trait_ for #this_ty #wheres {
             #content
         }
@@ -1387,7 +1411,9 @@ impl HelperAttributeForDebug {
             Ok(Self {
                 transparent: args.transparent,
                 skip: if args.skip.value() || args.ignore.value() {
-                    Flag { span: args.skip.span.or(args.ignore.span) }
+                    Flag {
+                        span: args.skip.span.or(args.ignore.span),
+                    }
                 } else {
                     Flag::NONE
                 },

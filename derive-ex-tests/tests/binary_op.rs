@@ -199,3 +199,52 @@ fn derive_other_2() {
     struct X;
     assert_eq!(X + X, X);
 }
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn add_impl_deprecated() {
+    use std::ops::Add;
+
+    #[deprecated]
+    #[derive(Clone)]
+    struct X {
+        value: u32,
+    }
+
+    #[allow(deprecated)]
+    #[derive_ex(Add)]
+    impl Add<X> for X {
+        type Output = X;
+        fn add(self, rhs: X) -> Self::Output {
+            X {
+                value: self.value + rhs.value,
+            }
+        }
+    }
+}
+
+#[test]
+#[deny(deprecated)]
+#[allow(unused)]
+fn add_impl_allow_deprecated() {
+    use std::ops::Add;
+
+    #[deprecated]
+    #[allow(unused)]
+    #[derive(Clone)]
+    struct Y {
+        value: u32,
+    }
+
+    #[allow(deprecated)]
+    #[derive_ex(Add)]
+    impl Add<Y> for Y {
+        type Output = Y;
+        fn add(self, rhs: Y) -> Self::Output {
+            Y {
+                value: self.value + rhs.value,
+            }
+        }
+    }
+}
