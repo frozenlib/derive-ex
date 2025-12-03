@@ -769,16 +769,49 @@ fn build_deref_for_struct(
     let mut wcb = WhereClauseBuilder::new(&item.generics);
     e.push_bounds_to(&mut wcb);
 
-    if fields.len() != 1 {
-        bail!(
-            Span::call_site(),
-            "`#[deirve_ex({})]` supports only single field struct.",
-            kind
-        );
-    }
-    let target_ty = &fields[0].field.ty;
-    let member = fields[0].member();
+    let targets: Vec<_> = fields
+        .iter()
+        .filter(|&field| field.hattrs.deref.deref.value())
+        .collect();
+    let field_idx = match targets.len() {
+        0 => {
+            if fields.len() == 1 {
+                0
+            } else {
+                bail!(
+                    Span::call_site(),
+                    "field with `#[deref]` does not exist but struct has more than one field.",
+                );
+            }
+        }
+        1 => targets[0].index,
+        _ => {
+            let names: Vec<String> = targets
+                .iter()
+                .map(|&field| {
+                    field
+                        .field
+                        .ident
+                        .as_ref()
+                        .map(Ident::to_string)
+                        .unwrap_or_else(move || field.index.to_string())
+                })
+                .collect();
+            bail!(
+                targets[0]
+                    .hattrs
+                    .deref
+                    .deref
+                    .span
+                    .unwrap_or(targets[0].field.span()),
+                "there are multiple variants with `#[deref]` ({})",
+                names.join(", "),
+            )
+        }
+    };
 
+    let target_ty = &fields[field_idx].field.ty;
+    let member = fields[field_idx].member();
     let content = match kind {
         DeriveItemKind::Deref => {
             quote! {
@@ -1217,6 +1250,7 @@ struct HelperAttributeKinds {
     derive_ex: bool,
     default: bool,
     debug: bool,
+    deref: bool,
     ord: bool,
     partial_ord: bool,
     eq: bool,
@@ -1236,6 +1270,7 @@ impl HelperAttributeKinds {
             match e.kind {
                 DeriveItemKind::Default => self.default = true,
                 DeriveItemKind::Debug => self.debug = true,
+                DeriveItemKind::Deref => self.deref = true,
                 DeriveItemKind::CompareOp(op) => match op {
                     CompareOp::Ord => self.ord = true,
                     CompareOp::PartialOrd => self.partial_ord = true,
@@ -1272,6 +1307,7 @@ impl HelperAttributeKinds {
             "derive_ex" => self.derive_ex,
             "default" => self.default,
             "debug" => self.debug,
+            "deref" => self.deref,
             "ord" => self.is_match_cmp_attr(CompareOp::Ord),
             "partial_ord" => self.is_match_cmp_attr(CompareOp::PartialOrd),
             "eq" => self.is_match_cmp_attr(CompareOp::Eq),
@@ -1293,6 +1329,7 @@ struct HelperAttributes {
     items: HashMap<DeriveItemKind, DeriveEntry>,
     default: Option<HelperAttributeForDefault>,
     debug: HelperAttributeForDebug,
+    deref: HelperAttributeForDeref,
     cmp: HelperAttributesForCompareOp,
 }
 
@@ -1320,11 +1357,17 @@ impl HelperAttributes {
         } else {
             HelperAttributeForDebug::default()
         };
+        let deref = if kinds.deref {
+            HelperAttributeForDeref::from_attrs(attrs)?
+        } else {
+            HelperAttributeForDeref::default()
+        };
         let cmp = HelperAttributesForCompareOp::from_attrs(attrs, kinds)?;
         let this = Self {
             items,
             default,
             debug,
+            deref,
             cmp,
         };
         this.verify(target)?;
@@ -1481,6 +1524,31 @@ impl HelperAttributeForDefault {
             });
         }
         None
+    }
+}
+
+#[derive(StructMeta, Debug, Default)]
+struct ArgsForDeref {}
+
+#[derive(Default)]
+struct HelperAttributeForDeref {
+    deref: Flag,
+}
+
+impl HelperAttributeForDeref {
+    fn from_attrs(attrs: &[Attribute]) -> Result<Self> {
+        if parse_single::<ArgsForDeref>(attrs, "deref")?.is_some() {
+            let span = attrs
+                .iter()
+                .find(|&attr| attr.path().is_ident("deref"))
+                .expect("parse_single already found a deref attribute")
+                .span();
+            Ok(Self {
+                deref: Flag { span: Some(span) },
+            })
+        } else {
+            Ok(Self { deref: Flag::NONE })
+        }
     }
 }
 

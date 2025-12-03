@@ -35,6 +35,41 @@ fn single_field() {
     let _: &u8 = &X { x: 10u8 };
     let _: &mut u8 = &mut X { x: 10u8 };
 }
+#[test]
+fn multiple_fields_tuple() {
+    #[derive_ex(Deref, DerefMut)]
+    #[expect(unused, reason = "testing with additional fields")]
+    struct X(#[deref] u8, u32);
+
+    let _: &u8 = &X(10u8, 1u32);
+    let _: &mut u8 = &mut X(10u8, 1u32);
+}
+#[test]
+fn multiple_fields_named() {
+    #[derive_ex(Deref, DerefMut)]
+    #[expect(unused, reason = "testing with additional fields")]
+    struct X {
+        #[deref]
+        x: u8,
+        y: u32,
+    }
+
+    let _: &u8 = &X { x: 10u8, y: 1u32 };
+    let _: &mut u8 = &mut X { x: 10u8, y: 1u32 };
+}
+#[test]
+fn not_first_field() {
+    #[derive_ex(Deref, DerefMut)]
+    #[expect(unused, reason = "testing with additional fields")]
+    struct X {
+        x: u8,
+        #[deref]
+        y: u32,
+    }
+
+    let _: &u32 = &X { x: 10u8, y: 1u32 };
+    let _: &mut u32 = &mut X { x: 10u8, y: 1u32 };
+}
 
 #[test]
 fn with_where() {

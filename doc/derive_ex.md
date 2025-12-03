@@ -546,6 +546,20 @@ struct X(u8);
 let _: &u8 = &X(10u8);
 ```
 
+For structs with multiple fields, you can use `#[deref]` to select the target for the `Deref` implementation.
+
+```rust
+use derive_ex::derive_ex;
+#[derive(Debug, Default)]
+#[derive_ex(Deref)]
+struct X {
+    a: u8,
+    #[deref]
+    b: u32,
+}
+assert_eq!(X::default().leading_zeros(), 32);
+```
+
 # Derive `DerefMut`
 
 You can use `#[derive(DerefMut)]` for struct with a single field to implement `DerefMut`.
@@ -557,6 +571,22 @@ use derive_ex::derive_ex;
 struct X(u8);
 
 let _: &mut u8 = &mut X(10u8);
+```
+
+For structs with multiple fields, you can use `#[deref]` to select the target for the `Deref` implementation.
+
+```rust
+use derive_ex::derive_ex;
+
+#[derive(Debug, Default)]
+#[derive_ex(Deref, DerefMut)]
+struct X {
+    a: u8,
+    #[deref]
+    b: u32,
+}
+
+let _: &mut u32 = &mut X::default();
 ```
 
 # Derive operators
